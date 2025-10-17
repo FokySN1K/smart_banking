@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />  
+  <title>{% block title %}Моё приложение{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+  
+  <style>
+  {% block styles %}{% endblock %}
+  </style>
+</head>
+    
+    {% block content %}{% endblock %}
+
+
+    {% if not home %}
+    <a href="/" class="home"> На главную</a>
+    {% endif %}
+
+</html>

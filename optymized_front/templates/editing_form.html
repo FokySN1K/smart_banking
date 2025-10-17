@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Добавить карту</title>
+  <style>
+    body {
+      font-family: system-ui;
+      background: #f7fafc;
+      padding: 40px;
+    }
+    form {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      width: 320px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+    }
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      text-decoration: none;
+      color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+    {% if base_name == 'cards' %}
+  <h1 style="text-align:center;">Изменение карты</h1>
+  {% endif %}
+
+  {% if base_name == 'categories' %}
+  <h1 style="text-align:center;">Изменение категории</h1>
+  {% endif %}
+
+  <form method="post">
+    
+    {% if base_name == 'cards' %}
+
+    <label>Номер карты:</label>
+    <div>{{ card.card_number }}</div>
+
+    <label>Баланс:</label>
+    <input type="text" name="money_amount" value="{{ card.money_amount }}" required>
+
+    <button type="submit">💾 Сохранить</button>
+
+    {% endif %}
+
+    {% if base_name == 'categories' %}
+
+    <label>Текущее название:</label>
+    <div>{{ category.category_name }}</div>
+
+    <label>Новое:</label>
+    <input type="text" name="category_name" value="{{ category['category_name'] }}" required>
+
+    <button type="submit">💾 Сохранить</button>
+
+    {% endif %}
+
+
+  </form>
+
+  {% if base_name == 'cards' %}
+  <a href="{{ url_for('list_cards') }}">⬅ Назад к списку</a>
+  {% endif %}
+
+
+  {% if base_name == 'categories' %}
+  <a href="{{ url_for('list_categories') }}">⬅ Назад к списку</a>
+  {% endif %}
+  
+</body>
+</html>

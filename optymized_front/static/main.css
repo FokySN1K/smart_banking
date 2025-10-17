@@ -1,0 +1,70 @@
+
+body{font-family:system-ui;background:#f7fafc;display:flex;align-items:center;justify-content:center;height:100vh;}
+.adding_body{font-family:system-ui;background:#f7fafc;display: block;align-items:center;justify-content:center;height:0vh;padding: 40px;}
+
+a{display:block;margin:10px 0;text-decoration:none;padding:10px;border-radius:8px;color:white;font-weight:600;}
+
+.b {
+display: block;
+text-align: center;
+margin-top: 12px;
+text-decoration: none;
+color: #2563eb;
+cursor: pointer;
+}
+
+select {
+appearance: none;
+background: #f9fafb url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='gray'><path d='M4 6l4 4 4-4z'/></svg>") no-repeat right 0.8rem center;
+background-size: 12px;
+border: 1px solid #ccc;
+border-radius: 6px;
+padding: 8px 36px 8px 12px;
+font-size: 14px;
+}
+
+form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  width: 320px;
+  margin: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+button {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+}
+
+.card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);width:360px;text-align:center;}
+.books{background:#059669;}
+.cards{background:#9333ea;}
+.categories{background:#f0db1c;}
+.auth{background:#2563eb;}
+
+
+.home{ width: 320px;color: #56f78b;background:#700161;text-align: center;margin: 0 auto;}
+
+
+
+.item{background:#fff;padding:16px;margin-bottom:12px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+a.edit{display:inline-block;margin-top:6px;text-decoration:none;padding:6px 10px;background:#9333ea;color:white;border-radius:6px;font-size:14px;}
+a.back{display:inline-block;margin-top:20px;text-decoration:none;padding:8px 16px;background:#2563eb;color:white;border-radius:8px;}
