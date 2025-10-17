@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+
+{% block title %}Добавить категорию{% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+
+  <h1 style="text-align:center;">Добавить новую категорию</h1>
+  <form method="post">
+
+    <label>Название категории:</label>
+    <input type="text" name="category_name" placeholder="Введите название" required>
+
+    <button type="submit">Добавить</button>
+  </form>
+
+  <a class="b" href="{{ url_for('list_categories') }}">⬅ Назад к списку</a>
+
+</body>
+{% endblock %}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Изменить баланс карты</title>
+  <style>
+    body{font-family:system-ui;background:#f7fafc;padding:40px;}
+    form{background:#fff;padding:24px;border-radius:8px;width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+    label{display:block;margin-bottom:8px;font-weight:600;}
+    input{width:100%;padding:8px;margin-bottom:12px;border:1px solid #ccc;border-radius:6px;}
+    button{background:#2563eb;color:white;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;}
+    a{display:inline-block;margin-top:12px;text-decoration:none;color:#2563eb;}
+  </style>
+</head>
+<body>
+  <h1>Изменить баланс карты</h1>
+  <form method="post">
+    <label>Номер карты:</label>
+    <div>{{ card.card_number }}</div>
+
+    <label>Баланс:</label>
+    <input type="text" name="money_amount" value="{{ card.money_amount }}" required>
+
+
+
+    <button type="submit">💾 Сохранить</button>
+  </form>
+
+  <a href="{{ url_for('list_cards') }}">⬅ Назад</a>
+</body>
+</html>

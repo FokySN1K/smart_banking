@@ -1,0 +1,67 @@
+{% extends "list_base.html" %}
+
+
+{% block content %}
+
+<body>
+  <h1>{{ title }}</h1>
+  {% for item in items %}
+    <div class="item">
+      {% if type == 'dict' %}
+      {% for key, value in item.items() %}
+      
+            {% if key not in not_visible %}
+            <p><strong>{{ key }}:</strong> {{ value }}</p>
+            {% endif %}
+      {% endfor %}
+      
+      {% if base_name == 'cards' %}
+
+      {% if cards_categories[item['card_id']] %}
+      <p><strong>Категории:</strong>
+      </p>
+        <p>
+        {% for key, value in cards_categories[item['card_id']].items() %}
+        <strong>{{ key }}:</strong> {{ value }}
+        {% endfor %}
+      {% endif %}
+
+        </p>
+
+        <a href="{{ url_for('add_category_to_card', card_number=item['card_number']) }}">+ Добавить категорию на карту</a>
+
+        <a class="edit" href="{{ url_for('edit_card', card_number=item.card_number) }}">✏️ Изменить</a>
+
+
+      {% endif %}
+
+      {% endif %}
+
+
+
+      {% if type == 'list' %}
+        </strong> {{ item[arg] }}</p>
+      {% endif %}
+
+      {% if base_name == 'categories' %}
+      <form method="post" action="{{ url_for('delete_category', category_id=item['category_id']) }}">
+        <button type="submit">🗑 Удалить</button>
+      </form>
+
+      <a class="edit" href="{{ url_for('edit_category', category_id=item['category_id']) }}">✏️ Изменить</a>
+      {% endif %}
+
+    </div>
+  {% endfor %}
+  {% if base_name == 'cards' %}
+  <a href="{{ url_for('add_card') }}" class="add" style="display:block;margin-bottom:12px;">➕ Добавить карту</a>
+{% endif %}
+
+{% if base_name == 'categories' %}
+<a href="{{ url_for('add_category') }}" class="add" style="display:block;margin-bottom:12px;">➕ Добавить категорию</a>
+{% endif %}
+
+  <a href="/" class="back">⬅ Назад</a>
+</body>
+
+{% endblock %}

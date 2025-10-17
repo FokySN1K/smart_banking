@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+
+{% block title %}Добавить категорию{% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+
+  <h1 style="text-align:center;">Добавить новую категорию на карту {{card['card_number']}}</h1>
+  <form method="post">
+
+    <label>Добавить категорию:</label>
+  <select name="category_id" required>
+    {% for c in categories %}
+      <option value="{{ c["category_id"] }}">{{ c["category_name"] }}</option>
+    {% endfor %}
+  </select>
+
+    <button type="submit">Добавить</button>
+  </form>
+
+  <a class="b" href="{{ url_for('list_cards') }}">⬅ Назад к карте</a>
+
+</body>
+{% endblock %}
