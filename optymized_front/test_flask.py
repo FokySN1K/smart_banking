@@ -45,6 +45,105 @@ categories = [
 ]
 
 
+
+# ----------------------------
+#              API
+# ----------------------------
+
+
+def user_by_id(user_id):
+    for u in users:
+        if u.id == int(user_id):
+            return u
+    return None
+
+def add_user_to_db(user):
+    users.append(user)
+
+    return user
+
+def is_login_exist(login_name):
+    return any(u.login == login_name for u in users)
+
+
+def user_by_login(login_name):
+    return next((u for u in users if u.login == login_name), None)
+
+
+def is_general_category_exist(current_user):
+    general_exist = False
+    for c in categories:
+        if (c['category_name'] == general_category and c['owner_id'] == current_user.id):
+            general_exist = True
+    
+    return general_exist
+
+
+def add_category_to_db(new_category):  
+    categories.append(new_category)
+
+
+def user_categories(current_user):
+    return [{k: v for k, v in c.items() if k not in {"owner_id"}} for c in categories if c["owner_id"] == current_user.id]
+
+
+def category_by_id(category_id):
+    return next((c for c in categories if c["category_id"] == category_id), None)
+
+
+def get_general_category():
+    return next((c for c in categories if c["owner_id"] == current_user.id and c["category_name"] == general_category), None)
+
+
+def change_category_name(category, new_name):
+    if new_name:
+        category["category_name"] = new_name
+
+
+def delete_category_api(category):
+    categories.remove(category)
+
+
+def user_cards_api(current_user):
+    return [{k: v for k, v in c.items()} for c in cards if c["owner_id"] == current_user.id]
+
+
+def card_categories_api(card):
+    return [category_by_id(s['category_id']) for s in subcards if s['card_id'] == card['card_id']]
+
+
+def cards_categories_api(user_cards, subcards):
+    return {c['card_id']: {category_by_id(s['category_id'])['category_name']: s['money_amount'] for s in subcards if s['card_id'] == c['card_id']} for c in user_cards} 
+
+
+def card_by_id_api(card_id):
+    print(type(card_id), card_id)
+    return next((c for c in cards if c["card_id"] == card_id), None)
+
+
+def add_card_api(new_card):
+    cards.append(new_card)
+
+
+def add_subcard_api(new_subcard):
+    subcards.append(new_subcard)
+
+
+def subcard_by_card_and_category_id_api(card_id, category_id):
+    return next((s for s in subcards if s["card_id"] == card_id and s["category_id"] == category_id), None)
+
+
+def subcard_balance_change_api(subcard, change):
+    subcard['money_amount'] += change
+
+
+def card_balance_change_api(card, change):
+    card['money_amount'] += change
+
+
+
+
+
 # ----------------------------
 #   Пользовательская модель
 # ----------------------------
@@ -69,10 +168,8 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    for u in users:
-        if u.id == int(user_id):
-            return u
-    return None
+    return user_by_id(user_id)
+    
 
 # ----------------------------
 #   Утилиты для хеширования
@@ -84,17 +181,14 @@ def hash_password(password, salt):
 def create_user(login, password):
     salt = os.urandom(8).hex()
     password_hash = hash_password(password, salt)
-    user = User(id=len(users) + 1, login=login, password_hash=password_hash, salt=salt)
-    users.append(user)
+    user = User(id=len(users) + 1, login=login, name='test', password_hash=password_hash, salt=salt)
     
-    return user
+    return add_user_to_db(user)                     # <<<<<<###############
 
 # ----------------------------
 #   РОУТЫ
 # ----------------------------
 
-def is_user_exist(login):
-    cur.execute(sql_query, params)
 
 @app.route('/')
 def index():
@@ -111,11 +205,11 @@ def register():
             flash(f"Логин должен быть не больше {login_limit} символов")
             return redirect(url_for('register'))
 
-
-        if any(u.login == login_name for u in users):
+        if is_login_exist(login_name):                   # <<<<<<###############
             flash('Логин уже занят!')
             return redirect(url_for('register'))
-        create_user(login_name, password)
+        
+        create_user(login_name, password)                  # <<<<<<###############
         flash('Регистрация прошла успешно! Войдите.')
         return redirect(url_for('login'))
     return render_template('register.html')
@@ -126,7 +220,8 @@ def login():
     if request.method == 'POST':
         login_name = request.form.get('login')
         password = request.form.get('password')
-        user = next((u for u in users if u.login == login_name), None)
+        user = user_by_login(login_name)             # <<<<<<###############
+
         if user and user.password_hash == hash_password(password, user.salt):
             login_user(user)
             flash('Успешный вход!')
@@ -148,10 +243,8 @@ def logout():
 @app.route('/categories')
 @login_required
 def list_categories():
-    general_exist = False
-    for c in categories:
-        if (c['category_name'] == general_category and c['owner_id'] == current_user.id):
-            general_exist = True
+
+    general_exist = is_general_category_exist(current_user)     # <<<<<<###############
 
     if not general_exist:
         new_category = {
@@ -159,11 +252,12 @@ def list_categories():
             "category_name": general_category,
             "owner_id": current_user.id
         }
-        categories.append(new_category)
 
-    user_categories = [{k: v for k, v in c.items() if k not in {"owner_id"}} for c in categories if c["owner_id"] == current_user.id]
+        add_category_to_db(new_category)                       # <<<<<<###############
 
-    return render_template('list.html', title="💳 Ваши категории", items=user_categories, base_name='categories', type="list", arg="category_name")
+    cur_user_categories = user_categories(current_user)      # <<<<<<###############
+
+    return render_template('list.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', type="list", arg="category_name")
 
 
 # ------------ Категории ------------------------------------------------------------------
@@ -184,7 +278,7 @@ def add_category():
             "owner_id": current_user.id
         }
         print(current_user.id)
-        categories.append(new_category)
+        add_category_to_db(new_category)                  # <<<<<<###############
         flash("Категория успешно добавлена!")
         return redirect(url_for('list_categories'))
 
@@ -194,14 +288,18 @@ def add_category():
 @login_required
 def edit_category(category_id):
 
-    category = next((c for c in categories if c["category_id"] == category_id), None)
+    category = category_by_id(category_id)                    # <<<<<<###############
 
     if not category:
         return "Категория не найдена", 404
+
+    if category["owner_id"] != current_user.id:
+        return "Нет прав для изменения этой категории", 403
+    
     if request.method == 'POST':
         new_name = request.form.get('category_name')
         if new_name:
-            category["category_name"] = new_name
+            change_category_name(category, new_name)            # <<<<<<###############
         flash("Имя обновлёно!")
         return redirect(url_for('list_categories'))
 
@@ -211,14 +309,15 @@ def edit_category(category_id):
 @app.route('/delete_category/<int:category_id>', methods=['POST'])
 @login_required
 def delete_category(category_id):
-    category = next((c for c in categories if c["category_id"] == category_id), None)
+    category = category_by_id(category_id)                    # <<<<<<###############
+
     if not category:
         return "Категория не найдена", 404
 
     if category["owner_id"] != current_user.id:
         return "Нет прав для удаления этой категории", 403
-
-    categories.remove(category)
+    
+    delete_category_api(category)
     flash("Категория удалена.")
     return redirect(url_for('list_categories'))
 
@@ -238,32 +337,20 @@ def list_books():
 # ------------ Карты ------------------------------------------------------------------
 
 
-def category_by_id(category_id):
-    category = None
-
-    for cat in categories:
-        if cat['category_id'] == category_id:
-            category = cat
-
-    if category:
-        return category
-
-    return category
-
 
 @app.route('/cards')
 @login_required
 def list_cards():
-    user_cards = [{k: v for k, v in c.items() if k} for c in cards if c["owner_id"] == current_user.id]
+    user_cards = user_cards_api(current_user)                     # <<<<<<###############
 
-    cards_categories = {c['card_id']: {category_by_id(s['category_id'])['category_name']: s['money_amount'] for s in subcards if s['card_id'] == c['card_id']} for c in user_cards} 
+    cards_categories = cards_categories_api(user_cards, subcards)  # <<<<<<###############
     return render_template('list.html', title="💳 Ваши карты", items=user_cards, base_name='cards', type="dict", cards_categories=cards_categories, not_visible={"owner_id", "card_id"})
 
 
-@app.route('/edit_card/<card_number>', methods=['GET', 'POST'])
+@app.route('/edit_card/<int:card_id>', methods=['GET', 'POST'])
 @login_required
-def edit_card(card_number):
-    card = next((c for c in cards if c["card_number"] == card_number), None)
+def edit_card(card_id):
+    card = card_by_id_api(card_id)                            # <<<<<<###############
     if not card:
         return "Карта не найдена", 404
     if request.method == 'POST':
@@ -275,10 +362,10 @@ def edit_card(card_number):
     return render_template('edit_card.html', base_name='cards', card=card)
 
 
-@app.route('/add_category_to_card/<card_number>', methods=['GET', 'POST'])
+@app.route('/add_category_to_card/<int:card_id>', methods=['GET', 'POST'])
 @login_required
-def add_category_to_card(card_number):
-    card = next((c for c in cards if c["card_number"] == card_number), None)
+def add_category_to_card(card_id):
+    card = card_by_id_api(card_id)                             # <<<<<<###############
 
 
     if not card:
@@ -293,7 +380,7 @@ def add_category_to_card(card_number):
                 "money_amount": 0
             }
 
-            subcards.append(new_subcard)
+            add_subcard_api(new_subcard)                          # <<<<<<###############
         flash("Категория добавлена!")
         return redirect(url_for('list_cards'))
     return render_template('add_category_to_card.html', base_name='cards', card=card, categories=categories)
@@ -322,17 +409,20 @@ def add_card():
             "owner_id": current_user.id
         }
 
-        category = next((c for c in categories if c["owner_id"] == current_user.id and c["category_name"] == general_category), None)
+        category = get_general_category()                                  # <<<<<<###############
+
         new_subcard = {
             "card_id": new_card["card_id"],
             "category_id": int(category['category_id']),
             "money_amount": 0
         }
-        subcards.append(new_subcard)
+
+        add_subcard_api(new_subcard)                                     # <<<<<<###############
 
 
         print(current_user.id)
-        cards.append(new_card)
+        
+        add_card_api(new_card)                                            # <<<<<<###############
         flash("Карта успешно добавлена!")
         return redirect(url_for('list_cards'))
 
@@ -346,7 +436,7 @@ def add_card():
 @login_required
 def add_money_general():
     
-    user_cards = [{k: v for k, v in c.items() if k} for c in cards if c["owner_id"] == current_user.id]
+    user_cards = user_cards_api(current_user)                             # <<<<<<###############
     
     return render_template('list_for_choice.html', title="💳 Ваши карты", items=user_cards, base_name='cards')
 
@@ -355,9 +445,9 @@ def add_money_general():
 @login_required
 def add_money_card(card_id):
 
-    card =  next((c for c in cards if c["card_id"] == card_id), None)
+    card = card_by_id_api(card_id)                                        # <<<<<<###############
 
-    card_categories = [category_by_id(s['category_id']) for s in subcards if s['card_id'] == card_id]
+    card_categories = card_categories_api(card)                           # <<<<<<###############
     
     return render_template('list_for_choice.html', title="💳 Ваши категории", items=card_categories, base_name='categories', card=card)
 
@@ -367,15 +457,15 @@ def add_money_card(card_id):
 @login_required
 def add_money_card_and_category(card_id, category_id):
 
-    card =  next((c for c in cards if c["card_id"] == card_id), None)
+    card = card_by_id_api(card_id)                                         # <<<<<<###############
 
-    subcard = next((s for s in subcards if s["card_id"] == card_id and s["category_id"] == category_id), None)
+    subcard = subcard_by_card_and_category_id_api(card_id, category_id)     # <<<<<<###############
 
     if request.method == 'POST':
         money_amount = request.form.get('money_amount')
         
-        subcard['money_amount'] += int(money_amount)
-        card['money_amount'] += int(money_amount)
+        subcard_balance_change_api(subcard, int(money_amount))               # <<<<<<###############
+        card_balance_change_api(card['money_amount'], int(money_amount))   # <<<<<<###############
 
         flash("Деньги добавлены!")
         return redirect('/')

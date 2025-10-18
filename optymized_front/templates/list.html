@@ -28,9 +28,9 @@
 
         </p>
 
-        <a href="{{ url_for('add_category_to_card', card_number=item['card_number']) }}">+ Добавить категорию на карту</a>
+        <a href="{{ url_for('add_category_to_card', card_id=item['card_id']) }}">+ Добавить категорию на карту</a>
 
-        <a class="edit" href="{{ url_for('edit_card', card_number=item.card_number) }}">✏️ Изменить</a>
+        <a class="edit" href="{{ url_for('edit_card', card_id=item.card_id) }}">✏️ Изменить</a>
 
 
       {% endif %}
