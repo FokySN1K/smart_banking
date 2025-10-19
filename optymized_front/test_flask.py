@@ -91,7 +91,7 @@ def category_by_id(category_id):
     return next((c for c in categories if c["category_id"] == category_id), None)
 
 
-def get_general_category():
+def get_general_category(current_user):
     return next((c for c in categories if c["owner_id"] == current_user.id and c["category_name"] == general_category), None)
 
 
@@ -121,12 +121,33 @@ def card_by_id_api(card_id):
     return next((c for c in cards if c["card_id"] == card_id), None)
 
 
-def add_card_api(new_card):
+def add_card_api(card_number, current_user):
+    def max_card_id():
+        id = 0
+        for c in cards:
+            if c["card_id"] > id:
+                id = c["card_id"]
+        return id
+    new_card = {
+            "card_id": max_card_id()+1,
+            "card_number": card_number,
+            "money_amount": 0,
+            "owner_id": current_user.id
+        }
     cards.append(new_card)
+    return new_card
 
 
-def add_subcard_api(new_subcard):
+def add_subcard_api(card_id, category_id):
+    new_subcard = {
+            "card_id": card_id,
+            "category_id": category_id,
+            "money_amount": 0
+    }
+    print("добавляем карту")
     subcards.append(new_subcard)
+
+    return new_subcard
 
 
 def subcard_by_card_and_category_id_api(card_id, category_id):
@@ -141,6 +162,13 @@ def card_balance_change_api(card, change):
     card['money_amount'] += change
 
 
+def is_subcard_exist(card_id, category_id):
+    subcard_exist = False
+    for s in subcards:
+        if (s['card_id'] == card_id and s['category_id'] == category_id):
+            subcard_exist = True
+    
+    return subcard_exist
 
 
 
@@ -372,26 +400,26 @@ def add_category_to_card(card_id):
         return "Карта не найдена", 404
     if request.method == 'POST':
         category_id = request.form.get('category_id')
+        print(category_id)
         if category_id:
+            category_id = int(category_id)
 
-            new_subcard = {
-                "card_id": card["card_id"], 
-                "category_id": int(category_id), 
-                "money_amount": 0
-            }
+            if not is_subcard_exist(card_id, category_id):
 
-            add_subcard_api(new_subcard)                          # <<<<<<###############
+                add_subcard_api(card["card_id"], category_id)                          # <<<<<<###############
+
+            else:
+                flash("Категория уже есть на карте")
+                print("Категория уже есть на карте")
+                return redirect(url_for('list_cards'))
+
+
         flash("Категория добавлена!")
         return redirect(url_for('list_cards'))
-    return render_template('add_category_to_card.html', base_name='cards', card=card, categories=categories)
+    return render_template('add_category_to_card.html', base_name='cards', card=card, categories=user_categories(current_user))
 
 
-def max_card_id():
-    id = 0
-    for c in cards:
-        if c["card_id"] > id:
-            id = c["card_id"]
-    return id
+
 
 @app.route('/add_card', methods=['GET', 'POST'])
 @login_required
@@ -402,27 +430,15 @@ def add_card():
 
 #        category_id = request.form.get('category_id')
 
-        new_card = {
-            "card_id": max_card_id()+1,
-            "card_number": card_number,
-            "money_amount": int(money_amount),
-            "owner_id": current_user.id
-        }
+        
+        new_card = add_card_api(card_number, current_user)                                                    # <<<<<<###############
 
-        category = get_general_category()                                  # <<<<<<###############
+        category = get_general_category(current_user)                                  # <<<<<<###############
 
-        new_subcard = {
-            "card_id": new_card["card_id"],
-            "category_id": int(category['category_id']),
-            "money_amount": 0
-        }
-
-        add_subcard_api(new_subcard)                                     # <<<<<<###############
-
+        add_subcard_api(new_card["card_id"], int(category['category_id']))              # <<<<<<###############
 
         print(current_user.id)
-        
-        add_card_api(new_card)                                            # <<<<<<###############
+
         flash("Карта успешно добавлена!")
         return redirect(url_for('list_cards'))
 
@@ -465,7 +481,7 @@ def add_money_card_and_category(card_id, category_id):
         money_amount = request.form.get('money_amount')
         
         subcard_balance_change_api(subcard, int(money_amount))               # <<<<<<###############
-        card_balance_change_api(card['money_amount'], int(money_amount))   # <<<<<<###############
+        card_balance_change_api(card, int(money_amount))   # <<<<<<###############
 
         flash("Деньги добавлены!")
         return redirect('/')
