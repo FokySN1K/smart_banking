@@ -1,5 +1,14 @@
 from db import Database
 import psycopg2 # для классификации ошибок
+from decimal import Decimal # amount в БД это numeric с цифрами после запятой
+
+"""
+from decimal import Decimal, ROUND_DOWN
+
+value = Decimal('1.239')
+rounded = value.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+print(rounded)  # Вывод: 1.23 (не 1.24, как при обычном округлении)
+"""
 
 MY_API_FOLDER = "sql/"
 
@@ -10,21 +19,45 @@ Database.configure(
 )
 
 def main():
+
+    #"""
     print_help()
+    return
+    #"""
 
     #create_tables()
 
-    #add_users()
-    #get_users()
-    #add_cards()
+    """
+    add_users()
+    get_users()
+    add_cards()
+    add_categories()
+    """
 
     """
-    my_cards = get_active_cards_by_owner_id(get_user_by_login("vovuas2003")[0])
+    my_id = get_user_by_login("vovuas2003")[0]
+    my_cards = get_active_cards_by_owner_id(my_id)
     print("My cards:", my_cards)
+    my_categories = get_active_categories_by_owner_id(my_id)
+    print("My categories:", my_categories)
+    add_all_subcards(my_id)
+    """
+
+    while True:
+        s = input("q = quit or type: subcard_id, delta_amount(use .) ")
+        if s == "q":
+            break
+        sid, delta = s.split()
+        sid = int(sid)
+        delta = Decimal(delta)
+        ret = delta_money_to_subcard(subcard_id = sid, delta_amount = delta)
+        print(ret)
+
+    """
     id_to_del = my_cards[0][0]
     ret = delete_card_by_id(id_to_del)
     print("Delete card:", ret)
-    my_cards = get_active_cards_by_owner_id(get_user_by_login("vovuas2003")[0])
+    my_cards = get_active_cards_by_owner_id(my_id)
     print("My cards:", my_cards)
     """
 
@@ -41,21 +74,26 @@ def print_help():
             get_user_by_login,
             add_card,
             delete_card_by_id,
-            get_active_cards_by_owner_id]
+            get_active_cards_by_owner_id,
+            add_category,
+            get_active_categories_by_owner_id,
+            add_subcard,
+            delta_money_to_subcard]
     for f in func:
         help(f)
         print()
 
 def create_tables():
-    folder = "../migration/src/main/resources/db/tables"
+    folder = "../migration/src/main/resources/db"
     db = Database.instance()
     # migration/src/main/resources/db/_changelog/create_database_v_1_0.xml
-    sequence = ["create_user.sql",
-                "create_card.sql",
-                "create_category.sql",
-                "create_template.sql",
-                "create_subcard.sql",
-                "create_transaction.sql"]
+    sequence = ["tables/create_user.sql",
+                "tables/create_card.sql",
+                "tables/create_category.sql",
+                "tables/create_template.sql",
+                "tables/create_subcard.sql",
+                "tables/create_transaction.sql",
+                "triggers/add_amount_from_subcard_to_card_and_category.sql"]
     for sql in sequence:
         db.execute(folder + "/" + sql)
 
@@ -133,7 +171,7 @@ def add_cards():
 
 def add_card(**kwargs):
     """
-    Добавляет карту в БД (is_active всегда True).
+    Добавляет карту в БД (is_active True, amount 0).
     Аргументы: owner_id, name, description (именованные).
     Возвращает строку из БД (кортеж) при успехе или None при конфликте (owner_id + name уже заняты).
     """
@@ -163,6 +201,79 @@ def get_active_cards_by_owner_id(owner_id):
     db = Database.instance()
     cards_rows = db.fetch_all(MY_API_FOLDER + "get_active_cards_by_owner_id.sql", params = {'owner_id': owner_id})
     return cards_rows
+
+def add_categories():
+    i = get_user_by_login("vovuas2003")
+    if i is None:
+        raise Exception("Cannot find vovuas2003 in database!")
+    i = i[0]
+    print("vovuas2003 id is", i)
+    ret = add_category(owner_id = i, name = "Еда", description = "По сути вкусно")
+    print("Add category Еда for vovuas2003:", ret)
+    ret = add_category(owner_id = i, name = "Еда", description = "Повтор owner_id + name")
+    print("Add category Еда for vovuas2003 (2nd attemp):", ret)
+    ret = add_category(owner_id = i, name = "Вода", description = "Режу воду 10 часов")
+    print("Add category Вода for vovuas2003:", ret)
+
+def add_category(**kwargs):
+    """
+    Добавляет категорию в БД (is_active True, amount 0).
+    Аргументы: owner_id, name, description (именованные).
+    Возвращает строку из БД (кортеж) при успехе или None при конфликте (owner_id + name уже заняты).
+    """
+    db = Database.instance()
+    try:
+        card_row = db.fetch_one_returning(MY_API_FOLDER + "add_category.sql", params = kwargs)
+        return card_row
+    except psycopg2.IntegrityError:
+        # Конфликт уникальности owner_id + name
+        return None
+    # аналогично add_user, подумать про return или другие ошибки
+
+
+def get_active_categories_by_owner_id(owner_id):
+    """
+    Получает все активные категории пользователя по owner_id.
+    Возвращает список строк из БД (кортежей) или пустой список.
+    """
+    db = Database.instance()
+    categories_rows = db.fetch_all(MY_API_FOLDER + "get_active_categories_by_owner_id.sql", params = {'owner_id': owner_id})
+    return categories_rows
+
+def add_subcard(**kwargs):
+    """
+    Добавляет субкарту в БД (is_active True, amount 0).
+    Аргументы: card_id, category_id, description (именованные).
+    Возвращает строку из БД (кортеж) при успехе или None при конфликте (card_id + category_id уже заняты).
+    """
+    db = Database.instance()
+    try:
+        subcard_row = db.fetch_one_returning(MY_API_FOLDER + "add_subcard.sql", params = kwargs)
+        return subcard_row
+    except psycopg2.IntegrityError:
+        # Конфликт уникальности card_id + category_id
+        return None
+    # аналогично add_user, подумать про return или другие ошибки
+
+def delta_money_to_subcard(**kwargs):
+    """
+    Добавляет (вычитает) деньги на субкарту в БД.
+    Аргументы: subcard_id, delta_amount (именованные).
+    Возвращает строку из БД (кортеж).
+    """
+    db = Database.instance()
+    subcard_row = db.fetch_one_returning(MY_API_FOLDER + "delta_money_to_subcard.sql", params = kwargs)
+    return subcard_row
+
+def add_all_subcards(owner_id):
+    car = get_active_cards_by_owner_id(owner_id)
+    cat = get_active_categories_by_owner_id(owner_id)
+    i = 0
+    for r in car:
+        for t in cat:
+            ret = add_subcard(card_id = r[0], category_id = t[0], description = "add_all_subcards_" + str(i) + ": " + r[2] + t[2])
+            print(ret)
+            i += 1
 
 if __name__ == "__main__":
     main()
