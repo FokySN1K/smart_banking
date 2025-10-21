@@ -1,9 +1,10 @@
 create table card
 (
-    id          int8          generated always as identity,
-    owner_id    int8          not null,
-    name        varchar(100)  not null,
-    is_active   boolean       not null,
+    id          int8              generated always as identity,
+    owner_id    int8              not null,
+    name        varchar(100)      not null,
+    amount      numeric(30, 4)    not null,
+    is_active   boolean           not null,
     description varchar(300),
     --
     constraint card_id_pk primary key (id),

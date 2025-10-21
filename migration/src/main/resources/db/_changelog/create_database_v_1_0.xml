@@ -13,8 +13,10 @@
         <sqlFile path="../tables/create_category.sql" relativeToChangelogFile="true"/>
         <sqlFile path="../tables/create_template.sql" relativeToChangelogFile="true"/>
         <sqlFile path="../tables/create_subcard.sql" relativeToChangelogFile="true"/>
-
         <sqlFile path="../tables/create_transaction.sql" relativeToChangelogFile="true"/>
+
+        <!-- create trigger -->
+        <sqlFile path="../triggers/add_amount_from_subcard_to_card_and_category.sql" relativeToChangelogFile="true" splitStatements="false"/>
 
         <rollback>
             <sqlFile path="../_rollback/delete_database_v_1_0.sql" relativeToChangelogFile="true"/>
