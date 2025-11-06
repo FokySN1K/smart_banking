@@ -3,7 +3,7 @@ create table subcard
     id          int8              generated always as identity,
     card_id     int8              not null,
     category_id int8              not null,
-    amount      numeric(30, 4)    not null,
+    amount      numeric(30, 2)    not null,
     description varchar(300),
     is_active   boolean           not null,
     --
