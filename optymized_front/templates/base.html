@@ -8,14 +8,71 @@
   
   <style>
   {% block styles %}{% endblock %}
+
+  body {
+      margin: 0;
+      padding: 0;
+      flex-direction: column;
+      min-height: 100vh;
+      font-family: sans-serif;
+      background-color: #f8fafc;
+  }
+
+  main {
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+  }
+
+  .home {
+      display: block;
+      text-align: center;
+      margin: 30px auto;
+      padding: 10px 16px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      width: fit-content;
+      left: 50%;
+  }
+
+  .home:hover {
+      background-color: #1d4ed8;
+  }
+
+  .flash-container {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+  }
+  .flash {
+      background: #dcfce7;
+      color: #166534;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: 500;
+  }
   </style>
 </head>
-    
-    {% block content %}{% endblock %}
 
+<body>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for msg in messages %}
+                <div class="flash">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
 
     {% if not home %}
-    <a href="/" class="home"> На главную</a>
+        <a href="/" class="home">На главную</a>
     {% endif %}
-
+</body>
 </html>

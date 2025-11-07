@@ -10,9 +10,33 @@
   .item{background:#fff;padding:16px;margin-bottom:12px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
   a.edit{display:inline-block;margin-top:6px;text-decoration:none;padding:6px 10px;background:#9333ea;color:white;border-radius:6px;font-size:14px;}
   a.back{display:inline-block;margin-top:20px;text-decoration:none;padding:8px 16px;background:#2563eb;color:white;border-radius:8px;}
+
+  .flash-container {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+  }
+  .flash {
+      background: #dcfce7;
+      color: #166534;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: 500;
+  }
 </style>
 
 {% block content %}{% endblock %}
 
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="flash-container">
+    {% for msg in messages %}
+        <div class="flash">{{ msg }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 
 </html>

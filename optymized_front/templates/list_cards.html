@@ -1,0 +1,41 @@
+{% extends "list_base.html" %}
+
+{% block content %}
+
+<h1>{{ title }}</h1>
+
+{% for item in items %}
+<div class="item">
+
+  {% for key, value in item.items() %}
+    {% if key not in not_visible %}
+      <p><strong>{{ key }}:</strong> {{ value }}</p>
+    {% endif %}
+  {% endfor %}
+
+  {% if cards_categories[item['card_id']] %}
+  <p><strong>Категории:</strong></p>
+  <p>
+    {% for key, value in cards_categories[item['card_id']].items() %}
+      <strong>{{ key }}:</strong> {{ value }}
+    {% endfor %}
+  </p>
+  {% endif %}
+
+  <p>
+    <a href="{{ url_for('add_category_to_card', card_id=item['card_id']) }}">+ Добавить категорию на карту</a>
+  </p>
+  <p>
+    <a href="{{ url_for('add_money_by_template', card_id=item['card_id']) }}">+ Зачислить деньги по шаблону</a>
+  </p>
+  <p>
+    <a class="edit" href="{{ url_for('edit_card', card_id=item['card_id']) }}">✏️ Изменить</a>
+  </p>
+
+</div>
+{% endfor %}
+
+<a href="{{ url_for('add_card') }}" class="add" style="display:block;margin-bottom:12px;">➕ Добавить карту</a>
+<a href="/" class="back">⬅ Назад</a>
+
+{% endblock %}

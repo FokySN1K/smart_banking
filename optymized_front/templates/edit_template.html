@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+
+{% block title %}Изменить шаблон{% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+
+  <h1 style="text-align:center;">Добавить новый шаблон</h1>
+  <form method="post">
+
+    <div class="item">
+    <label>Описание шаблона:</label>
+    <input type="text" name="template_description" placeholder="Введите описание" required>
+</div>
+  {% for category in categories %}
+
+  <label>{{category["category_name"]}}</label>
+    <input type="text" name="percent_{{ category.category_id }}" placeholder="Введите процент" required>
+
+  {% endfor %}
+
+    <button type="submit">Добавить</button>
+  </form>
+
+  <a class="b" href="{{ url_for('list_templates') }}">⬅ Назад к списку</a>
+
+</body>
+{% endblock %}

@@ -37,9 +37,8 @@ books = [
 ]
 
 
-general_category = "Общее"
 categories = [
-    {"category_id": 0, "category_name": general_category, "owner_id": 1},
+    {"category_id": 0, "category_name": "Общее", "owner_id": 1},
     {"category_id": 1, "category_name": "eda", "owner_id": 1},
     {"category_id": 2, "category_name": "учеба", "owner_id": 1}
 ]
@@ -70,14 +69,6 @@ def user_by_login(login_name):
     return next((u for u in users if u.login == login_name), None)
 
 
-def is_general_category_exist(current_user):
-    general_exist = False
-    for c in categories:
-        if (c['category_name'] == general_category and c['owner_id'] == current_user.id):
-            general_exist = True
-    
-    return general_exist
-
 
 def add_category_to_db(new_category):  
     categories.append(new_category)
@@ -90,9 +81,6 @@ def user_categories(current_user):
 def category_by_id(category_id):
     return next((c for c in categories if c["category_id"] == category_id), None)
 
-
-def get_general_category(current_user):
-    return next((c for c in categories if c["owner_id"] == current_user.id and c["category_name"] == general_category), None)
 
 
 def change_category_name(category, new_name):
@@ -268,27 +256,16 @@ def logout():
 
 
 # --- Защищённые страницы ---
+# ------------ Категории ------------------------------------------------------------------
 @app.route('/categories')
 @login_required
 def list_categories():
 
-    general_exist = is_general_category_exist(current_user)     # <<<<<<###############
-
-    if not general_exist:
-        new_category = {
-            "category_id": len(categories)+1,
-            "category_name": general_category,
-            "owner_id": current_user.id
-        }
-
-        add_category_to_db(new_category)                       # <<<<<<###############
-
     cur_user_categories = user_categories(current_user)      # <<<<<<###############
 
-    return render_template('list.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', type="list", arg="category_name")
+    return render_template('list_categories.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', type="list", arg="category_name")
 
 
-# ------------ Категории ------------------------------------------------------------------
 
 @app.route('/add_category', methods=['GET', 'POST'])
 @login_required
@@ -372,7 +349,7 @@ def list_cards():
     user_cards = user_cards_api(current_user)                     # <<<<<<###############
 
     cards_categories = cards_categories_api(user_cards, subcards)  # <<<<<<###############
-    return render_template('list.html', title="💳 Ваши карты", items=user_cards, base_name='cards', type="dict", cards_categories=cards_categories, not_visible={"owner_id", "card_id"})
+    return render_template('list_cards.html', title="💳 Ваши карты", items=user_cards, base_name='cards', type="dict", cards_categories=cards_categories, not_visible={"owner_id", "card_id"})
 
 
 @app.route('/edit_card/<int:card_id>', methods=['GET', 'POST'])
@@ -433,8 +410,6 @@ def add_card():
         
         new_card = add_card_api(card_number, current_user)                                                    # <<<<<<###############
 
-        category = get_general_category(current_user)                                  # <<<<<<###############
-
         add_subcard_api(new_card["card_id"], int(category['category_id']))              # <<<<<<###############
 
         print(current_user.id)
@@ -479,9 +454,9 @@ def add_money_card_and_category(card_id, category_id):
 
     if request.method == 'POST':
         money_amount = request.form.get('money_amount')
-        
+
         subcard_balance_change_api(subcard, int(money_amount))               # <<<<<<###############
-        card_balance_change_api(card, int(money_amount))   # <<<<<<###############
+        card_balance_change_api(card, int(money_amount))                     # <<<<<<###############
 
         flash("Деньги добавлены!")
         return redirect('/')
@@ -491,6 +466,323 @@ def add_money_card_and_category(card_id, category_id):
 
 
 
+#------------------- Шаблоны ---------------
+templates = [
+    {"template_id": 1, "owner_id": 1, "percents": {0: 50, 1: 30, 2: 20}, "description":""},
+    {"template_id": 2, "owner_id": 1, "percents": {0: 100}, "description":"Мой шаблон"},
+    {"template_id": 3, "owner_id": 2, "percents": {0: 70, 1: 30}, "description":""}
+]
+
+# Добавьте в раздел API функции для работы с шаблонами:
+def user_templates_api(current_user):
+    return [t for t in templates if t["owner_id"] == current_user.id]
+
+def template_by_id_api(template_id):
+    return next((t for t in templates if t["template_id"] == template_id), None)
+
+def add_template_api(percents, current_user, description=""):
+    def max_template_id():
+        return max(t["template_id"] for t in templates) if templates else 0
+    
+    new_template = {
+        "template_id": max_template_id() + 1,
+        "owner_id": current_user.id,
+        "percents": percents,
+        "description": description
+    }
+    templates.append(new_template)
+    return new_template
+
+def update_template_api(template, new_percents, template_description):
+    if template_description:
+        template["description"] = template_description
+    template["percents"] = new_percents
+
+def delete_template_api(template):
+    templates.remove(template)
+
+def validate_percents(percents_dict):
+    """Проверяет, что сумма процентов равна 100"""
+    return sum(percents_dict.values()) == 100
+
+
+
+# --- Шаблоны распределения ---
+@app.route('/templates')
+@login_required
+def list_templates():
+    user_templates = user_templates_api(current_user)
+    print(user_templates)
+    return render_template('list_of_templates.html', 
+                         title="📊 Ваши шаблоны распределения", 
+                         items=user_templates, category_by_id=category_by_id)
+
+@app.route('/add_template', methods=['GET', 'POST'])
+@login_required
+def add_template():
+    if request.method == 'POST':
+        template_description = request.form.get('template_description')
+        
+        # Собираем проценты из формы
+        percents = {}
+        user_cats = user_categories(current_user)
+        
+        for category in user_cats:
+            percent_str = request.form.get(f'percent_{category["category_id"]}')
+            if percent_str and percent_str.strip():
+                try:
+                    percent_val = int(percent_str)
+                    if percent_val > 0:
+                        percents[category["category_id"]] = percent_val
+                except ValueError:
+                    pass
+        
+        # Проверяем валидность
+        if not template_description:
+            flash("Введите название шаблона.")
+            return redirect(url_for('add_template'))
+        
+        if not percents:
+            flash("Добавьте хотя бы одну категорию с процентом.")
+            return redirect(url_for('add_template'))
+        
+        if not validate_percents(percents):
+            flash("Сумма процентов должна равняться 100!")
+            return redirect(url_for('add_template'))
+        
+        # Сохраняем шаблон
+        add_template_api(percents, current_user, template_description)
+        flash("Шаблон успешно добавлен!")
+        return redirect(url_for('list_templates'))
+    
+    user_cats = user_categories(current_user)
+    return render_template('add_template.html', 
+                         categories=user_cats)
+
+@app.route('/edit_template/<int:template_id>', methods=['GET', 'POST'])
+@login_required
+def edit_template(template_id):
+    template = template_by_id_api(template_id)
+    
+    if not template:
+        return "Шаблон не найден", 404
+    
+    if template["owner_id"] != current_user.id:
+        return "Нет прав для изменения этого шаблона", 403
+    
+    if request.method == 'POST':
+        template_description = request.form.get('template_description')
+        
+        # Собираем проценты из формы
+        percents = {}
+        user_cats = user_categories(current_user)
+        
+        for category in user_cats:
+            percent_str = request.form.get(f'percent_{category["category_id"]}')
+            if percent_str and percent_str.strip():
+                try:
+                    percent_val = int(percent_str)
+                    if percent_val > 0:
+                        percents[category["category_id"]] = percent_val
+                except ValueError:
+                    pass
+        
+        # Проверяем валидность
+        if not template_description:
+            flash("Введите название шаблона.")
+            return redirect(url_for('edit_template', template_id=template_id))
+        
+        if not percents:
+            flash("Добавьте хотя бы одну категорию с процентом.")
+            return redirect(url_for('edit_template', template_id=template_id))
+        
+        if not validate_percents(percents):
+            flash("Сумма процентов должна равняться 100!")
+            return redirect(url_for('edit_template', template_id=template_id))
+        
+        # Обновляем шаблон
+        update_template_api(template, percents, template_description)
+        flash("Шаблон успешно обновлен!")
+        return redirect(url_for('list_templates'))
+    
+    user_cats = user_categories(current_user)
+    return render_template('edit_template.html', 
+                         template=template, 
+                         categories=user_cats)
+
+@app.route('/delete_template/<int:template_id>', methods=['POST'])
+@login_required
+def delete_template(template_id):
+    template = template_by_id_api(template_id)
+    
+    if not template:
+        return "Шаблон не найден", 404
+    
+    if template["owner_id"] != current_user.id:
+        return "Нет прав для удаления этого шаблона", 403
+    
+    delete_template_api(template)
+    flash("Шаблон удален.")
+    return redirect(url_for('list_templates'))
+
+'''
+@app.route('/add_money_by_template/<int:card_id>', methods=['GET', 'POST'])
+@login_required
+def add_money_by_template(card_id):
+    card = card_by_id_api(card_id)
+    
+    if not card:
+        return "Карта не найдена", 404
+    
+    if card["owner_id"] != current_user.id:
+        return "Нет прав для доступа к этой карте", 403
+    
+    if request.method == 'POST':
+        template_id = request.form.get('template_id')
+        total_amount_str = request.form.get('total_amount')
+        
+        if not template_id or not total_amount_str:
+            flash("Выберите шаблон и укажите сумму")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+        
+        try:
+            template_id = int(template_id)
+            total_amount = int(total_amount_str)
+        except ValueError:
+            flash("Некорректные данные")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+        
+        template = template_by_id_api(template_id)
+        
+        if not template:
+            flash("Шаблон не найден")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+        
+        if template["owner_id"] != current_user.id:
+            flash("Нет прав для использования этого шаблона")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+        
+        # Распределяем деньги по категориям согласно шаблону
+        distributed_amounts = {}
+        
+        for category_id, percent in template["percents"].items():
+            amount_for_category = total_amount * percent // 100
+            distributed_amounts[category_id] = amount_for_category
+            
+            # Находим или создаем subcard для этой категории
+            subcard = subcard_by_card_and_category_id_api(card_id, category_id)
+            if not subcard:
+                subcard = add_subcard_api(card_id, category_id)
+            
+            # Добавляем деньги на subcard
+            subcard_balance_change_api(subcard, amount_for_category)
+        
+        # Обновляем общий баланс карты
+        card_balance_change_api(card, total_amount)
+        
+        # Формируем сообщение о распределении
+        distribution_info = []
+        for category_id, amount in distributed_amounts.items():
+            category = category_by_id(category_id)
+            category_name = category["category_name"] if category else f"Категория {category_id}"
+            distribution_info.append(f"{category_name}: {amount} руб.")
+        
+        flash(f"На карту зачислено {total_amount} руб. по шаблону '{template}'. Распределение: {', '.join(distribution_info)}")
+        return redirect(url_for('list_cards'))
+    
+    # GET запрос - показываем форму
+    user_templates = user_templates_api(current_user)
+    return render_template('add_money_by_template.html', 
+                         card=card, 
+                         templates=user_templates, 
+                         category_by_id=category_by_id)
+'''
+
+@app.route('/add_money_by_template/<int:card_id>', methods=['GET', 'POST'])
+@login_required
+def add_money_by_template(card_id):
+    card = card_by_id_api(card_id)
+
+    if not card:
+        return "Карта не найдена", 404
+
+    if card["owner_id"] != current_user.id:
+        return "Нет прав для доступа к этой карте", 403
+
+    if request.method == 'POST':
+        template_id = request.form.get('template_id')
+        total_amount_str = request.form.get('total_amount')
+
+        if not template_id or not total_amount_str:
+            flash("Выберите шаблон и укажите сумму")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+
+        try:
+            template_id = int(template_id)
+            total_amount = int(total_amount_str)
+        except ValueError:
+            flash("Некорректные данные")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+
+        template = template_by_id_api(template_id)
+
+        if not template:
+            flash("Шаблон не найден")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+
+        if template["owner_id"] != current_user.id:
+            flash("Нет прав для использования этого шаблона")
+            return redirect(url_for('add_money_by_template', card_id=card_id))
+
+        # 🧮 Собираем фактическое распределение из формы
+        distributed_amounts = {}
+        total_from_form = 0
+
+        for category_id in template["percents"].keys():
+            form_key = f"category_amount_{category_id}"
+            if form_key in request.form:
+                try:
+                    amount_for_category = int(request.form[form_key])
+                except ValueError:
+                    amount_for_category = 0
+                distributed_amounts[category_id] = amount_for_category
+                total_from_form += amount_for_category
+
+        # ⚠️ Проверяем совпадение общей суммы (не обязательно, но полезно)
+        if total_from_form != total_amount:
+            flash(f"Внимание: сумма по категориям ({total_from_form} руб.) не совпадает с общей ({total_amount} руб.)")
+            total_amount = total_from_form  # можно скорректировать, либо оставить
+
+        # 🏦 Обновляем субкарты и баланс
+        for category_id, amount_for_category in distributed_amounts.items():
+            subcard = subcard_by_card_and_category_id_api(card_id, category_id)
+            if not subcard:
+                subcard = add_subcard_api(card_id, category_id)
+            subcard_balance_change_api(subcard, amount_for_category)
+
+        # Обновляем общий баланс карты
+        card_balance_change_api(card, total_amount)
+
+        # 🧾 Формируем сообщение о распределении
+        distribution_info = []
+        for category_id, amount in distributed_amounts.items():
+            category = category_by_id(category_id)
+            category_name = category["category_name"] if category else f"Категория {category_id}"
+            distribution_info.append(f"{category_name}: {amount} руб.")
+
+        flash(
+            f"На карту зачислено {total_amount} руб. по шаблону #{template['template_id']}. "
+            f"Распределение: {', '.join(distribution_info)}"
+        )
+        return redirect(url_for('list_cards'))
+
+    # GET-запрос: показать форму
+    user_templates = user_templates_api(current_user)
+    return render_template(
+        'add_money_to_card_by_template.html',
+        card=card,
+        templates=user_templates, 
+        category_by_id=category_by_id)
 
 
 if __name__ == '__main__':

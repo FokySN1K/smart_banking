@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить деньги по шаблону{% endblock %}
+
+{% block styles %}
+.form-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    max-width: 600px;
+    margin: 30px auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+label {
+    font-weight: 600;
+}
+
+select, input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+.flash {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#distribution-container {
+    display: none;
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.distribution-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.distribution-row input {
+    width: 100px;
+    text-align: right;
+}
+
+.back-btn {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    text-decoration: none;
+    color: white;
+    background-color: #10b981;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+.back-btn:hover {
+    background-color: #059669;
+}
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Добавить деньги по шаблону</h2>
+    <p><strong>Карта:</strong> {{ card.card_number }}</p>
+    <p><strong>Баланс:</strong> {{ card.money_amount }} руб.</p>
+
+    <form method="POST" id="template-form">
+        <div>
+            <label for="template_id">Выберите шаблон:</label>
+            <select name="template_id" id="template_id" required>
+                <option value="">-- Выберите шаблон --</option>
+                {% for template in templates %}
+                    <option 
+                        value="{{ template.template_id }}"
+                        data-percents='{{ template.percents | tojson }}'
+                    >{% for k, v in template.percents.items() %}
+                    {{ category_by_id(k).category_name }}: {{ v }}
+                {% endfor %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="total_amount">Сумма пополнения (в руб.):</label>
+            <input type="number" id="total_amount" name="total_amount" min="1" required>
+        </div>
+
+        <div id="distribution-container">
+            <h3>Предпросмотр распределения</h3>
+            <div id="distribution-list"></div>
+        </div>
+
+        <button type="button" id="preview-btn">Показать распределение</button>
+        <button type="submit" id="submit-btn" style="display:none;">Подтвердить и пополнить</button>
+    </form>
+
+    <a href="{{ url_for('list_cards') }}" class="back-btn">Назад к картам</a>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selectTemplate = document.getElementById('template_id');
+    const inputAmount = document.getElementById('total_amount');
+    const previewBtn = document.getElementById('preview-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const distContainer = document.getElementById('distribution-container');
+    const distList = document.getElementById('distribution-list');
+
+    previewBtn.addEventListener('click', () => {
+        const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
+        const amount = parseInt(inputAmount.value);
+        const percentsData = templateOption.dataset.percents ? JSON.parse(templateOption.dataset.percents) : null;
+
+        if (!templateOption.value || !amount || !percentsData) {
+            alert('Выберите шаблон и укажите сумму');
+            return;
+        }
+
+        distList.innerHTML = '';
+
+        Object.entries(percentsData).forEach(([category_id, percent]) => {
+            const amountForCat = Math.floor(amount * percent / 100);
+            const row = document.createElement('div');
+            row.classList.add('distribution-row');
+            row.innerHTML = `
+                <span>Категория ${category_id} (${percent}%)</span>
+                <input type="number" name="category_amount_${category_id}" value="${amountForCat}" min="0">
+            `;
+            distList.appendChild(row);
+        });
+
+        distContainer.style.display = 'block';
+        submitBtn.style.display = 'inline-block';
+    });
+});
+</script>
+{% endblock %}
