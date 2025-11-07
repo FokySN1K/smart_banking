@@ -6,11 +6,43 @@ from flask_login import (
 
 import hashlib, os
 
+
+import sys
+
+# Получаем путь к родительской директории
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Добавляем этот путь в sys.path
+sys.path.append(parent_dir)
+
+from api import api
+
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+
+
+# ----------------------------
+#   Пользовательская модель
+# ----------------------------
+
+login_limit = 30
+name_limit = 50
+
+class User(UserMixin):
+    def __init__(self, id, login, name, password_hash, salt):
+        self.id = id
+        self.login = login
+        self.name = name
+        self.password_hash = password_hash
+        self.salt = salt
+
+    def get_id(self):
+        return str(self.id)
+
 
 # ----------------------------
 #   «Базы данных» в памяти
@@ -44,6 +76,11 @@ categories = [
 ]
 
 
+templates = [
+    {"template_id": 1, "owner_id": 1, "percents": {0: 50, 1: 30, 2: 20}, "description":""},
+    {"template_id": 2, "owner_id": 1, "percents": {0: 100}, "description":"Мой шаблон"},
+    {"template_id": 3, "owner_id": 2, "percents": {0: 70, 1: 30}, "description":""}
+]
 
 # ----------------------------
 #              API
@@ -51,10 +88,8 @@ categories = [
 
 
 def user_by_id(user_id):
-    for u in users:
-        if u.id == int(user_id):
-            return u
-    return None
+
+    return User(*get_user_by_id(user_id))
 
 def add_user_to_db(user):
     users.append(user)
@@ -66,7 +101,10 @@ def is_login_exist(login_name):
 
 
 def user_by_login(login_name):
-    return next((u for u in users if u.login == login_name), None)
+    user = api.get_user_by_login(login)
+    if user:
+        return User(*user)
+    return None
 
 
 
@@ -80,7 +118,6 @@ def user_categories(current_user):
 
 def category_by_id(category_id):
     return next((c for c in categories if c["category_id"] == category_id), None)
-
 
 
 def change_category_name(category, new_name):
@@ -159,24 +196,39 @@ def is_subcard_exist(card_id, category_id):
     return subcard_exist
 
 
+def user_templates_api(current_user):
+    return [t for t in templates if t["owner_id"] == current_user.id]
 
-# ----------------------------
-#   Пользовательская модель
-# ----------------------------
+def template_by_id_api(template_id):
+    return next((t for t in templates if t["template_id"] == template_id), None)
 
-login_limit = 30
-name_limit = 50
+def add_template_api(percents, current_user, description=""):
+    def max_template_id():
+        return max(t["template_id"] for t in templates) if templates else 0
+    
+    new_template = {
+        "template_id": max_template_id() + 1,
+        "owner_id": current_user.id,
+        "percents": percents,
+        "description": description
+    }
+    templates.append(new_template)
+    return new_template
 
-class User(UserMixin):
-    def __init__(self, id, login, name, password_hash, salt):
-        self.id = id
-        self.login = login
-        self.name = name
-        self.password_hash = password_hash
-        self.salt = salt
+def update_template_api(template, new_percents, template_description):
+    if template_description:
+        template["description"] = template_description
+    template["percents"] = new_percents
 
-    def get_id(self):
-        return str(self.id)
+def delete_template_api(template):
+    templates.remove(template)
+
+def validate_percents(percents_dict):
+    """Проверяет, что сумма процентов равна 100"""
+    return sum(percents_dict.values()) == 100
+
+
+
 
 # ----------------------------
 #   Flask-Login callbacks
@@ -194,12 +246,11 @@ def load_user(user_id):
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
-def create_user(login, password):
+def create_user(login, name, password):
     salt = os.urandom(8).hex()
     password_hash = hash_password(password, salt)
-    user = User(id=len(users) + 1, login=login, name='test', password_hash=password_hash, salt=salt)
     
-    return add_user_to_db(user)                     # <<<<<<###############
+    return api.add_user(login, password_hash, salt, name)                     # <<<<<<###############
 
 # ----------------------------
 #   РОУТЫ
@@ -215,17 +266,22 @@ def index():
 def register():
     if request.method == 'POST':
         login_name = request.form.get('login')
+        name = request.form.get('name')
         password = request.form.get('password')
 
         if len(login_name) > login_limit:
             flash(f"Логин должен быть не больше {login_limit} символов")
+            return redirect(url_for('register'))
+        
+        if len(name) > name_limit:
+            flash(f"Имя должно быть не больше {login_limit} символов")
             return redirect(url_for('register'))
 
         if is_login_exist(login_name):                   # <<<<<<###############
             flash('Логин уже занят!')
             return redirect(url_for('register'))
         
-        create_user(login_name, password)                  # <<<<<<###############
+        create_user(login_name, name, password)                  # <<<<<<###############
         flash('Регистрация прошла успешно! Войдите.')
         return redirect(url_for('login'))
     return render_template('register.html')
@@ -467,44 +523,6 @@ def add_money_card_and_category(card_id, category_id):
 
 
 #------------------- Шаблоны ---------------
-templates = [
-    {"template_id": 1, "owner_id": 1, "percents": {0: 50, 1: 30, 2: 20}, "description":""},
-    {"template_id": 2, "owner_id": 1, "percents": {0: 100}, "description":"Мой шаблон"},
-    {"template_id": 3, "owner_id": 2, "percents": {0: 70, 1: 30}, "description":""}
-]
-
-# Добавьте в раздел API функции для работы с шаблонами:
-def user_templates_api(current_user):
-    return [t for t in templates if t["owner_id"] == current_user.id]
-
-def template_by_id_api(template_id):
-    return next((t for t in templates if t["template_id"] == template_id), None)
-
-def add_template_api(percents, current_user, description=""):
-    def max_template_id():
-        return max(t["template_id"] for t in templates) if templates else 0
-    
-    new_template = {
-        "template_id": max_template_id() + 1,
-        "owner_id": current_user.id,
-        "percents": percents,
-        "description": description
-    }
-    templates.append(new_template)
-    return new_template
-
-def update_template_api(template, new_percents, template_description):
-    if template_description:
-        template["description"] = template_description
-    template["percents"] = new_percents
-
-def delete_template_api(template):
-    templates.remove(template)
-
-def validate_percents(percents_dict):
-    """Проверяет, что сумма процентов равна 100"""
-    return sum(percents_dict.values()) == 100
-
 
 
 # --- Шаблоны распределения ---
