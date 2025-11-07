@@ -1,4 +1,4 @@
-from db import Database
+from .db import Database
 
 import functools
 
@@ -295,7 +295,7 @@ def change_category_by_id(**kwargs):
     Аргументы: id, name, description (именованные).
     Возвращает строку из БД (кортеж) при успехе или None при ошибке (например, нарушена уникальность).
     """
-    return DB.fetch_one_returning(CHANGE_CATEGORY_BY_ID", params = kwargs)
+    return DB.fetch_one_returning(CHANGE_CATEGORY_BY_ID, params = kwargs)
 
 @try_return_none
 def change_card_by_id(**kwargs):
