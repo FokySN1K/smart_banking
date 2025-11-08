@@ -788,6 +788,8 @@ def add_money_by_template(card_id):
 def add_money_by_template(card_id):
     card = card_by_id_api(card_id)
 
+    print(card)
+
     if not card:
         return "Карта не найдена", 404
 
@@ -861,6 +863,7 @@ def add_money_by_template(card_id):
 
     # GET-запрос: показать форму
     user_templates = user_templates_api(current_user)
+    print(card)
     return render_template(
         'add_money_to_card_by_template.html',
         card=card,

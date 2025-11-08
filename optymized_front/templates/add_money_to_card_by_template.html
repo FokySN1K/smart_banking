@@ -87,8 +87,8 @@ button:hover {
 {% block content %}
 <div class="form-container">
     <h2>Добавить деньги по шаблону</h2>
-    <p><strong>Карта:</strong> {{ card.card_number }}</p>
-    <p><strong>Баланс:</strong> {{ card.money_amount }} руб.</p>
+    <p><strong>Карта:</strong> {{ card.card_name }}</p>
+    <p><strong>Баланс:</strong> {{ card.amount }} руб.</p>
 
     <form method="POST" id="template-form">
         <div>
