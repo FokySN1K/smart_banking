@@ -64,8 +64,8 @@
                 <option value="">-- Выберите шаблон --</option>
                 {% for template in templates %}
                 <option value="{{ template.template_id }}" data-percents="{{ template.percents }}">
-                    {% for k, v in template.percents.items() %}
-                        {{ category_by_id(k).category_name }}: {{ v }}
+                    {% for k, v in template["percents"].items() %}
+                        {{ category_by_id(k)["category_name"] }}: {{ v }}
                     {% endfor %}
                 </option>
                 {% endfor %}

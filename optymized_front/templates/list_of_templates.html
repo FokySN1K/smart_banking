@@ -9,13 +9,13 @@
     <div class="item">
 
       {% if item["description"] != "" %}
-        <p><strong>{{item["description"]}}:</strong>
+        <p><strong>Описание: {{item["description"]}}</strong>
         </p>
         {% endif %}
       {% for key, value in item["percents"].items() %}
-      
-            <p><strong>{{ category_by_id(key)["category_name"] }}:</strong> {{ value }}</p>
-            
+            {% if value %}
+            <p><strong>Категория {{ category_by_id(key)["category_name"] }}:</strong> {{ value }}%</p>
+            {% endif %}
       {% endfor %}
       
     

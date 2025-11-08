@@ -13,7 +13,7 @@
             {% for item in items %}
 
         <div class="item">
-            <p><strong>Номер карты:</strong> {{ item['card_number'] }}
+            <p><strong>Имя карты:</strong> {{ item['card_name'] }}
             
             <a href="{{ url_for('add_money_card', card_id=item['card_id']) }}">+ Зачислить сюда</a>
             

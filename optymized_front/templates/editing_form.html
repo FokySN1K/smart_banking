@@ -79,6 +79,13 @@
     <label>Новое:</label>
     <input type="text" name="category_name" value="{{ category['category_name'] }}" required>
 
+
+    <label>Текущее описание:</label>
+    <div>{{ category.description }}</div>
+
+    <label>Новое:</label>
+    <input type="text" name="description" value="{{ category['description'] }}" required>
+
     <button type="submit">💾 Сохранить</button>
 
     {% endif %}

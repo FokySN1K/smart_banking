@@ -5,7 +5,10 @@ from flask_login import (
 )
 
 import hashlib, os
+import sys
+import json
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from api import api
 
 app = Flask(__name__)
@@ -24,7 +27,7 @@ login_limit = 30
 name_limit = 50
 
 class User(UserMixin):
-    def __init__(self, id, login, name, password_hash, salt):
+    def __init__(self, id, login, password_hash, salt, name):
         self.id = id
         self.login = login
         self.name = name
@@ -41,15 +44,34 @@ class User(UserMixin):
 
 users = []
 
+cards_columns = ["card_id", "owner_id", "card_name", "amount", "is_active", "description"]
+
+def turple_cards_to_dict(data):
+    return dict(zip(cards_columns, data))
+
+def turples_cards_to_dicts(data):
+    return [turple_cards_to_dict(row) for row in data]
+
 cards = [
     {"card_id": 1, "card_number": "1234-5678-9012-3456", "money_amount": 10500, "owner_id": 1, },
     {"card_id": 2, "card_number": "9999-8888-7777-6666", "money_amount": 230, "owner_id": 1},
     {"card_id": 3, "card_number": "5555-4444-3333-2222", "money_amount": 180000, "owner_id": 2}
 ]
 
+
+
+
+subcards_columns = ["subcard_id", "card_id", "category_id", "amount", "description", "is_active"]
+
+def turple_subcards_to_dict(data):
+    return dict(zip(subcards_columns, data))
+
+def turples_subcards_to_dicts(data):
+    return [turple_subcards_to_dict(row) for row in data]
+
 subcards = [
-    {"card_id": 1, "category_id": 1, "money_amount": 100},
-    {"card_id": 1, "category_id": 2, "money_amount": 200}
+    {"card_id": 1, "category_id": 1, "amount": 100},
+    {"card_id": 1, "category_id": 2, "amount": 200}
 
 ]
 
@@ -60,11 +82,28 @@ books = [
 ]
 
 
+categories_columns = ['category_id', 'owner_id', 'category_name', 'amount', 'is_active','description']
+
+def turple_categories_to_dict(data):
+    return dict(zip(categories_columns, data))
+
+def turples_categories_to_dicts(data):
+    return [turple_categories_to_dict(row) for row in data]
+
 categories = [
-    {"category_id": 0, "category_name": "Общее", "owner_id": 1},
-    {"category_id": 1, "category_name": "eda", "owner_id": 1},
-    {"category_id": 2, "category_name": "учеба", "owner_id": 1}
+    {"category_id": 0, "category_name": "Общее", "owner_id": 1, "description": "1"},
+    {"category_id": 1, "category_name": "eda", "owner_id": 1, "description": "2"},
+    {"category_id": 2, "category_name": "учеба", "owner_id": 1, "description": "3"}
 ]
+
+
+templates_columns = ["template_id", "owner_id", "percents", "description"]
+
+def turple_templates_to_dict(data):
+    return dict(zip(templates_columns, data))
+
+def turples_templates_to_dicts(data):
+    return [turple_templates_to_dict(row) for row in data]
 
 
 templates = [
@@ -73,6 +112,14 @@ templates = [
     {"template_id": 3, "owner_id": 2, "percents": {0: 70, 1: 30}, "description":""}
 ]
 
+
+# ----------------------------
+#   Утилиты для хеширования
+# ----------------------------
+
+def hash_password(password, salt):
+    return hashlib.sha256((password + salt).encode()).hexdigest()
+
 # ----------------------------
 #              API
 # ----------------------------
@@ -80,49 +127,94 @@ templates = [
 
 def user_by_id(user_id):
 
-    return User(*api.get_user_by_id(user_id))
+    data = api.get_user_by_id(user_id)
+    print("юзер по id", user_id, data)
+    if not data:
+        return None
+    
+    return User(*data)
 
 def add_user_to_db(user):
     users.append(user)
 
     return user
 
+
+def create_user(login, name, password):
+    salt = os.urandom(8).hex()
+    password_hash = hash_password(password, salt)
+
+    ret = api.add_user(login=login, password_hash=password_hash, password_salt=salt, name=name)                     # <<<<<<###############
+
+    print(ret)
+
+    return ret
+
 def is_login_exist(login_name):
-    return any(u.login == login_name for u in users)
+    return api.get_user_by_login(login) is not None
 
 
-def user_by_login(login_name):
-    return User(*get_user_by_login(login))
+def user_by_login(login):
+    data = api.get_user_by_login(login)
+    print(login, data)
+
+    if not data:
+        return None
+    
+    return User(*data)
 
 
+def add_category_to_db(new_category):
 
-def add_category_to_db(new_category):  
-    categories.append(new_category)
+    data = api.add_category(owner_id=new_category["owner_id"], name=new_category["category_name"], description=new_category["description"])
+    print(data)
+    categories.append(data)
+
+
 
 
 def user_categories(current_user):
-    return [{k: v for k, v in c.items() if k not in {"owner_id"}} for c in categories if c["owner_id"] == current_user.id]
+    data = api.get_active_categories_by_owner_id((current_user.id))
+    print("Категории юзера", data)
+    result = turples_categories_to_dicts(data)
+    return result
+
+    #return [{k: v for k, v in c.items() if k not in {"owner_id"}} for c in categories if c["owner_id"] == current_user.id]
 
 
 def category_by_id(category_id):
-    return next((c for c in categories if c["category_id"] == category_id), None)
+    return turple_categories_to_dict(api.get_category_by_id(category_id))
 
 
-def change_category_name(category, new_name):
-    if new_name:
-        category["category_name"] = new_name
+def change_category(category, new_name, new_description):
+    api.change_category_by_id(id=category['category_id'], name=new_name, description=new_description)
 
 
 def delete_category_api(category):
-    categories.remove(category)
+    api.deactivate_category_by_id(category['category_id'])
 
 
 def user_cards_api(current_user):
-    return [{k: v for k, v in c.items()} for c in cards if c["owner_id"] == current_user.id]
+    data = api.get_active_cards_by_owner_id(current_user.id)
+    print("Карты юзера", data)
+
+    return turples_cards_to_dicts(data)
 
 
-def card_categories_api(card):
-    return [category_by_id(s['category_id']) for s in subcards if s['card_id'] == card['card_id']]
+def subcards_by_card_id(card_id):
+    data = api.get_active_subcards_by_card_id(card_id)
+
+    print("сабкарты", data)
+    card_subcards = turples_subcards_to_dicts(data)
+    print("сабкарты словари", card_subcards)
+    return card_subcards
+
+
+def card_categories_api(card_id):
+    data = api.get_active_subcards_by_card_id(card_id)
+    card_subcards = turples_subcards_to_dicts(data)
+    print("сабкарты словари", card_subcards)
+    return [category_by_id(s['category_id']) for s in card_subcards]
 
 
 def cards_categories_api(user_cards, subcards):
@@ -130,86 +222,74 @@ def cards_categories_api(user_cards, subcards):
 
 
 def card_by_id_api(card_id):
-    print(type(card_id), card_id)
-    return next((c for c in cards if c["card_id"] == card_id), None)
+    return turple_cards_to_dict(api.get_card_by_id(card_id))
 
 
-def add_card_api(card_number, current_user):
-    def max_card_id():
-        id = 0
-        for c in cards:
-            if c["card_id"] > id:
-                id = c["card_id"]
-        return id
-    new_card = {
-            "card_id": max_card_id()+1,
-            "card_number": card_number,
-            "money_amount": 0,
-            "owner_id": current_user.id
-        }
-    cards.append(new_card)
+def add_card_api(card_name, description, current_user):
+    print("Аргументы новой карты:", card_name, description, current_user.id)
+    new_card = api.add_card(owner_id=current_user.id, name=card_name, description=description)
+    print("добавленная карта", new_card)
     return new_card
 
 
-def add_subcard_api(card_id, category_id):
-    new_subcard = {
-            "card_id": card_id,
-            "category_id": category_id,
-            "money_amount": 0
-    }
-    print("добавляем карту")
-    subcards.append(new_subcard)
+def delete_card_api(card):
+    api.delete_card_by_id(card['card_id'])
+
+
+def add_subcard_api(card_id, category_id, description):
+
+    new_subcard = turple_subcards_to_dict(api.add_subcard(card_id=card_id, category_id=category_id, description=description))
 
     return new_subcard
 
 
 def subcard_by_card_and_category_id_api(card_id, category_id):
-    return next((s for s in subcards if s["card_id"] == card_id and s["category_id"] == category_id), None)
+    data = api.get_subcard_by_card_id_and_category_id(card_id=card_id, category_id=category_id)
+    return turple_subcards_to_dict(data)
 
 
-def subcard_balance_change_api(subcard, change):
-    subcard['money_amount'] += change
+def subcard_balance_inc(subcard, change):
+    api.inc_money_to_subcard(card_id=subcard['card_id'], category_id=subcard['category_id'], inc_amount=change, description='')
 
 
-def card_balance_change_api(card, change):
-    card['money_amount'] += change
+def inc_money_to_subcard(card_id, category_id, inc_amount, description):
+    api.inc_money_to_subcard(card_id=card_id, category_id=category_id, inc_amount=inc_amount, description=description)
 
 
 def is_subcard_exist(card_id, category_id):
-    subcard_exist = False
-    for s in subcards:
-        if (s['card_id'] == card_id and s['category_id'] == category_id):
-            subcard_exist = True
-    
-    return subcard_exist
+    data = api.get_subcard_by_card_id_and_category_id(card_id, category_id)
+    return data is not None
 
 
 def user_templates_api(current_user):
-    return [t for t in templates if t["owner_id"] == current_user.id]
+    data = api.get_templates_by_owner_id(current_user.id)
+    print(data)
+
+    data = turples_templates_to_dicts(data)
+    
+    return data
+
 
 def template_by_id_api(template_id):
     return next((t for t in templates if t["template_id"] == template_id), None)
 
+
 def add_template_api(percents, current_user, description=""):
-    def max_template_id():
-        return max(t["template_id"] for t in templates) if templates else 0
-    
-    new_template = {
-        "template_id": max_template_id() + 1,
-        "owner_id": current_user.id,
-        "percents": percents,
-        "description": description
-    }
-    templates.append(new_template)
+    percents = json.dumps({str(k): v for k, v in percents.items()})
+    print("проценты", percents)
+    new_template = api.add_template(owner_id=current_user.id, percents=percents, description=description)
+    print(new_template)
     return new_template
 
+
 def update_template_api(template, new_percents, template_description):
-    if template_description:
-        template["description"] = template_description
-    template["percents"] = new_percents
+    data = api.change_template_by_id(id=template['template_id'], percents=json.dumps({str(k): v for k, v in new_percents.items()}), description=template_description)
+    print(data)
+
 
 def delete_template_api(template):
     templates.remove(template)
+
 
 def validate_percents(percents_dict):
     """Проверяет, что сумма процентов равна 100"""
@@ -225,20 +305,7 @@ def validate_percents(percents_dict):
 @login_manager.user_loader
 def load_user(user_id):
     return user_by_id(user_id)
-    
 
-# ----------------------------
-#   Утилиты для хеширования
-# ----------------------------
-
-def hash_password(password, salt):
-    return hashlib.sha256((password + salt).encode()).hexdigest()
-
-def create_user(login, name, password):
-    salt = os.urandom(8).hex()
-    password_hash = hash_password(password, salt)
-    
-    return add_user(login, password_hash, password_salt, name)                     # <<<<<<###############
 
 # ----------------------------
 #   РОУТЫ
@@ -307,7 +374,7 @@ def list_categories():
 
     cur_user_categories = user_categories(current_user)      # <<<<<<###############
 
-    return render_template('list_categories.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', type="list", arg="category_name")
+    return render_template('list_categories.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', not_visible={"owner_id", "category_id", 'is_active'})
 
 
 
@@ -316,15 +383,16 @@ def list_categories():
 def add_category():
     if request.method == 'POST':
         category_name = request.form.get('category_name')
+        description = request.form.get('description')
 
         if not category_name:
             flash("Введите название категории.")
             return redirect(url_for('add_category'))
 
         new_category = {
-            "category_id": len(categories)+1,
+            "owner_id": current_user.id,
             "category_name": category_name,
-            "owner_id": current_user.id
+            "description": description
         }
         print(current_user.id)
         add_category_to_db(new_category)                  # <<<<<<###############
@@ -347,9 +415,10 @@ def edit_category(category_id):
     
     if request.method == 'POST':
         new_name = request.form.get('category_name')
+        new_description = request.form.get('description')
         if new_name:
-            change_category_name(category, new_name)            # <<<<<<###############
-        flash("Имя обновлёно!")
+            change_category(category, new_name, new_description)            # <<<<<<###############
+        flash("Категория обновлёна!")
         return redirect(url_for('list_categories'))
 
     return render_template('editing_form.html', base_name='categories', category=category)
@@ -392,8 +461,8 @@ def list_books():
 def list_cards():
     user_cards = user_cards_api(current_user)                     # <<<<<<###############
 
-    cards_categories = cards_categories_api(user_cards, subcards)  # <<<<<<###############
-    return render_template('list_cards.html', title="💳 Ваши карты", items=user_cards, base_name='cards', type="dict", cards_categories=cards_categories, not_visible={"owner_id", "card_id"})
+    #cards_categories = cards_categories_api(user_cards, subcards)  # <<<<<<###############
+    return render_template('list_cards.html', title="💳 Ваши карты", items=user_cards, base_name='cards', type="dict", subcards_by_card_id=subcards_by_card_id, category_by_id=category_by_id, not_visible={"owner_id", "card_id", 'is_active'})
 
 
 @app.route('/edit_card/<int:card_id>', methods=['GET', 'POST'])
@@ -410,6 +479,20 @@ def edit_card(card_id):
         return redirect(url_for('list_cards'))
     return render_template('edit_card.html', base_name='cards', card=card)
 
+@app.route('/delete_card/<int:card_id>', methods=['POST'])
+@login_required
+def delete_card(card_id):
+    card = card_by_id_api(card_id)                    # <<<<<<###############
+
+    if not card:
+        return "Карта не найдена", 404
+
+    if card["owner_id"] != current_user.id:
+        return "Нет прав для удаления этой карты", 403
+    
+    delete_card_api(card)
+    flash("Карта удалена.")
+    return redirect(url_for('list_cards'))
 
 @app.route('/add_category_to_card/<int:card_id>', methods=['GET', 'POST'])
 @login_required
@@ -427,11 +510,10 @@ def add_category_to_card(card_id):
 
             if not is_subcard_exist(card_id, category_id):
 
-                add_subcard_api(card["card_id"], category_id)                          # <<<<<<###############
+                add_subcard_api(card["card_id"], category_id, "")                          # <<<<<<###############
 
             else:
                 flash("Категория уже есть на карте")
-                print("Категория уже есть на карте")
                 return redirect(url_for('list_cards'))
 
 
@@ -446,17 +528,15 @@ def add_category_to_card(card_id):
 @login_required
 def add_card():
     if request.method == 'POST':
-        card_number = request.form.get('card_number')
-        money_amount = request.form.get('money_amount')
-
-#        category_id = request.form.get('category_id')
+        card_name = request.form.get('card_name')
+        description = request.form.get('description')
 
         
-        new_card = add_card_api(card_number, current_user)                                                    # <<<<<<###############
+        new_card = add_card_api(card_name, description, current_user)                                                    # <<<<<<###############
 
-        add_subcard_api(new_card["card_id"], int(category['category_id']))              # <<<<<<###############
+        #add_subcard_api(new_card["card_id"], int(category['category_id']))              # <<<<<<###############
 
-        print(current_user.id)
+        #print(current_user.id)
 
         flash("Карта успешно добавлена!")
         return redirect(url_for('list_cards'))
@@ -482,7 +562,7 @@ def add_money_card(card_id):
 
     card = card_by_id_api(card_id)                                        # <<<<<<###############
 
-    card_categories = card_categories_api(card)                           # <<<<<<###############
+    card_categories = card_categories_api(card_id)                           # <<<<<<###############
     
     return render_template('list_for_choice.html', title="💳 Ваши категории", items=card_categories, base_name='categories', card=card)
 
@@ -499,8 +579,7 @@ def add_money_card_and_category(card_id, category_id):
     if request.method == 'POST':
         money_amount = request.form.get('money_amount')
 
-        subcard_balance_change_api(subcard, int(money_amount))               # <<<<<<###############
-        card_balance_change_api(card, int(money_amount))                     # <<<<<<###############
+        subcard_balance_inc(subcard, int(money_amount))                       # <<<<<<###############
 
         flash("Деньги добавлены!")
         return redirect('/')
@@ -681,7 +760,7 @@ def add_money_by_template(card_id):
                 subcard = add_subcard_api(card_id, category_id)
             
             # Добавляем деньги на subcard
-            subcard_balance_change_api(subcard, amount_for_category)
+            subcard_balance_inc(subcard, amount_for_category)
         
         # Обновляем общий баланс карты
         card_balance_change_api(card, total_amount)
@@ -764,10 +843,8 @@ def add_money_by_template(card_id):
             subcard = subcard_by_card_and_category_id_api(card_id, category_id)
             if not subcard:
                 subcard = add_subcard_api(card_id, category_id)
-            subcard_balance_change_api(subcard, amount_for_category)
+            subcard_balance_inc(subcard, amount_for_category)
 
-        # Обновляем общий баланс карты
-        card_balance_change_api(card, total_amount)
 
         # 🧾 Формируем сообщение о распределении
         distribution_info = []

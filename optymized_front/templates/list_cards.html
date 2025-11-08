@@ -13,11 +13,11 @@
     {% endif %}
   {% endfor %}
 
-  {% if cards_categories[item['card_id']] %}
+  {% if subcards_by_card_id(item['card_id']) %}
   <p><strong>Категории:</strong></p>
   <p>
-    {% for key, value in cards_categories[item['card_id']].items() %}
-      <strong>{{ key }}:</strong> {{ value }}
+    {% for s in subcards_by_card_id(item['card_id']) %}
+      <strong>{{ category_by_id(s.category_id).category_name }}:</strong> {{ s.amount }}
     {% endfor %}
   </p>
   {% endif %}
@@ -31,6 +31,9 @@
   <p>
     <a class="edit" href="{{ url_for('edit_card', card_id=item['card_id']) }}">✏️ Изменить</a>
   </p>
+  <form method="post" action="{{ url_for('delete_card', card_id=item['card_id']) }}">
+    <button type="submit">🗑 Удалить</button>
+  </form>
 
 </div>
 {% endfor %}
