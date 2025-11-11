@@ -1,4 +1,0 @@
-UPDATE card
-SET name = %(name)s, description = %(description)s
-WHERE id = %(id)s
-RETURNING *;
