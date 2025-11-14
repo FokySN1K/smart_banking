@@ -1,2 +1,2 @@
 shell.nix
-venv/
+venv/*
