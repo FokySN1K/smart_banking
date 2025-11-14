@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Снятие средств{% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+
+  <h1 style="text-align:center;">Введите сумму траты</h1>
+  <form method="post">
+
+    
+    <label>Баланс:</label>
+    <input type="number" name="money_amount" placeholder="Введите сумму" required>
+
+
+    <button style="margin-top: 10px;" type="submit">➕ Подтвердить </button>
+  </form>
+
+  <a class="b" href="{{ url_for('list_cards') }}">⬅ Назад к списку</a>
+
+</body>
+
+
+  {% endblock %}

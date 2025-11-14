@@ -1,0 +1,49 @@
+{% extends "list_base.html" %}
+
+
+{% block content %}
+
+
+<body>
+    <h1>{{ title }}</h1>
+
+
+        {% if base_name == 'cards' %}
+
+            {% for item in items %}
+
+        <div class="item">
+            <p><strong>Имя карты:</strong> {{ item['card_name'] }}
+            
+            <a href="{{ url_for('dec_money_card', card_id=item['card_id']) }}">- Вычесть отсюда</a>
+            
+            </p>
+
+        </div>
+            {% endfor %}
+
+            <a href="/" class="back"">⬅ Назад</a>
+        {% endif %}
+
+
+        {% if base_name == 'categories' %}
+
+            {% for item in items %}
+
+        <div class="item">
+            <p><strong>Имя категория:</strong> {{ item['category_name'] }}
+            
+            <a href="{{ url_for('dec_money_card_and_category', card_id=card['card_id'], category_id=item['category_id']) }}">- Вычесть отсюда</a>
+            
+            </p>
+
+        </div>
+            {% endfor %}
+        
+            <a href="{{ url_for('dec_money_general') }}" class="back">⬅ Назад</a>
+        {% endif %}
+  
+  </body>
+  
+
+{% endblock %}

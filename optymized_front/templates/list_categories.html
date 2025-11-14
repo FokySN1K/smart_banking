@@ -14,7 +14,7 @@
   {% endfor %}
 
   <form method="post" action="{{ url_for('delete_category', category_id=item['category_id']) }}">
-    <button type="submit">🗑 Удалить</button>
+    <button type="submit" onclick="return confirm('Вы точно хотите удалить категорию?')">🗑 Удалить</button>
   </form>
 
   <a class="edit" href="{{ url_for('edit_category', category_id=item['category_id']) }}">✏️ Изменить</a>

@@ -6,12 +6,15 @@
     <h2>Добро пожаловать!</h2>
     {% if current_user.is_authenticated %}
       <p>Вы вошли как <strong>{{ current_user.login }}</strong></p>
-      <a href="/add_money_general" class="cards">💳 Зачислить деньги</a>
+      <div class="cards-container">
+        <a href="/add_money_general" class="cards" style="background-color: rgb(51, 214, 51);">💳 Зачислить деньги</a>
+        <a href="/dec_money_general" class="cards" style="background-color: brown;">💳 Снять деньги</a>
+      </div>
 
       <a href="/cards" class="cards">💳 Карты</a>
       <a href="/categories" class="categories">📚 Категории</a>
 
-      <a href="/templates" class="categories">📚 Шаблоны</a>
+      <a href="/templates" class="templates">📚 Шаблоны</a>
       
       <a href="/logout" class="auth">🚪 Выйти</a>
     {% else %}

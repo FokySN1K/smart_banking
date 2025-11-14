@@ -124,6 +124,17 @@ button:hover {
 </div>
 
 <script>
+async function category_by_id(arg) {
+    const url = `/category_by_id/${arg}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    console.log(data);
+    return data;
+}
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', () => {
     const selectTemplate = document.getElementById('template_id');
     const inputAmount = document.getElementById('total_amount');
@@ -132,32 +143,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const distContainer = document.getElementById('distribution-container');
     const distList = document.getElementById('distribution-list');
 
-    previewBtn.addEventListener('click', () => {
-        const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
-        const amount = parseInt(inputAmount.value);
-        const percentsData = templateOption.dataset.percents ? JSON.parse(templateOption.dataset.percents) : null;
+    previewBtn.addEventListener('click', async () => {  // сделаем обработчик async
+    const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
+    const amount = parseInt(inputAmount.value);
+    const percentsData = templateOption.dataset.percents ? JSON.parse(templateOption.dataset.percents) : null;
 
-        if (!templateOption.value || !amount || !percentsData) {
-            alert('Выберите шаблон и укажите сумму');
-            return;
-        }
+    if (!templateOption.value || !amount || !percentsData) {
+        alert('Выберите шаблон и укажите сумму');
+        return;
+    }
 
-        distList.innerHTML = '';
+    distList.innerHTML = '';
 
-        Object.entries(percentsData).forEach(([category_id, percent]) => {
-            const amountForCat = Math.floor(amount * percent / 100);
-            const row = document.createElement('div');
-            row.classList.add('distribution-row');
-            row.innerHTML = `
-                <span>Категория ${category_id} (${percent}%)</span>
-                <input type="number" name="category_amount_${category_id}" value="${amountForCat}" min="0">
-            `;
-            distList.appendChild(row);
-        });
+    for (const [category_id, percent] of Object.entries(percentsData)) {
+        const amountForCat = Math.floor(amount * percent / 100);
+        const row = document.createElement('div');
+        row.classList.add('distribution-row');
 
-        distContainer.style.display = 'block';
-        submitBtn.style.display = 'inline-block';
-    });
+        const data = await category_by_id(category_id);  // ✅ теперь await работает
+        row.innerHTML = `
+            <span>Категория ${data.category_name} (${percent}%)</span>
+            <input type="number" name="category_amount_${data.category_id}" value="${amountForCat}" min="0">
+        `;
+        distList.appendChild(row);
+    }
+
+    distContainer.style.display = 'block';
+    submitBtn.style.display = 'inline-block';
+});
 });
 </script>
 {% endblock %}

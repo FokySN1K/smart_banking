@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import (
     LoginManager, UserMixin, login_user, logout_user,
     login_required, current_user
@@ -183,8 +183,15 @@ def user_categories(current_user):
 
 
 def category_by_id(category_id):
-    return turple_categories_to_dict(api.get_category_by_id(category_id))
+    data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
+    print(data["category_name"])
+    return data
 
+@app.route("/category_by_id/<int:category_id>", methods=['GET', 'POST'])
+def category_by_id_api(category_id):
+    data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
+    print(data["category_name"])
+    return jsonify(data)
 
 def change_category(category, new_name, new_description):
     api.change_category_by_id(id=category['category_id'], name=new_name, description=new_description)
@@ -238,9 +245,7 @@ def delete_card_api(card):
 
 def add_subcard_api(card_id, category_id, description):
 
-    new_subcard = turple_subcards_to_dict(api.add_subcard(card_id=card_id, category_id=category_id, description=description))
-
-    return new_subcard
+    return api.add_subcard(card_id=card_id, category_id=category_id, description=description)
 
 
 def subcard_by_card_and_category_id_api(card_id, category_id):
@@ -252,8 +257,8 @@ def subcard_balance_inc(subcard, change):
     api.inc_money_to_subcard(card_id=subcard['card_id'], category_id=subcard['category_id'], inc_amount=change, description='')
 
 
-def inc_money_to_subcard(card_id, category_id, inc_amount, description):
-    api.inc_money_to_subcard(card_id=card_id, category_id=category_id, inc_amount=inc_amount, description=description)
+def subcard_balance_dec(subcard, change):
+    api.dec_money_from_subcard(card_id=subcard['card_id'], category_id=subcard['category_id'], dec_amount=change, description='')
 
 
 def is_subcard_exist(card_id, category_id):
@@ -271,7 +276,9 @@ def user_templates_api(current_user):
 
 
 def template_by_id_api(template_id):
-    return next((t for t in templates if t["template_id"] == template_id), None)
+    data = api.get_template_by_id(template_id)
+    print("шаблон по ид\n\n\n\n", template_id, data)
+    return turple_templates_to_dict(data)
 
 
 def add_template_api(percents, current_user, description=""):
@@ -394,7 +401,7 @@ def add_category():
             "category_name": category_name,
             "description": description
         }
-        print(current_user.id)
+
         add_category_to_db(new_category)                  # <<<<<<###############
         flash("Категория успешно добавлена!")
         return redirect(url_for('list_categories'))
@@ -553,7 +560,7 @@ def add_money_general():
     
     user_cards = user_cards_api(current_user)                             # <<<<<<###############
     
-    return render_template('list_for_choice.html', title="💳 Ваши карты", items=user_cards, base_name='cards')
+    return render_template('list_for_choice_inc_money.html', title="💳 Ваши карты", items=user_cards, base_name='cards')
 
 
 @app.route('/add_money_card/<int:card_id>')
@@ -564,15 +571,13 @@ def add_money_card(card_id):
 
     card_categories = card_categories_api(card_id)                           # <<<<<<###############
     
-    return render_template('list_for_choice.html', title="💳 Ваши категории", items=card_categories, base_name='categories', card=card)
+    return render_template('list_for_choice_inc_money.html', title="💳 Ваши категории", items=card_categories, base_name='categories', card=card)
 
 
 
 @app.route('/add_money_card_and_category/<int:card_id>/<int:category_id>', methods=['GET', 'POST'])
 @login_required
 def add_money_card_and_category(card_id, category_id):
-
-    card = card_by_id_api(card_id)                                         # <<<<<<###############
 
     subcard = subcard_by_card_and_category_id_api(card_id, category_id)     # <<<<<<###############
 
@@ -585,6 +590,49 @@ def add_money_card_and_category(card_id, category_id):
         return redirect('/')
 
     return render_template('add_money_card_and_category.html')
+
+
+
+
+@app.route('/dec_money_general')
+@login_required
+def dec_money_general():
+    print("dec money")
+    user_cards = user_cards_api(current_user)                             # <<<<<<###############
+    
+    return render_template('list_for_choice_dec_money.html', title="💳 Ваши карты", items=user_cards, base_name='cards')
+
+
+@app.route('/dec_money_card/<int:card_id>')
+@login_required
+def dec_money_card(card_id):
+
+    card = card_by_id_api(card_id)                                        # <<<<<<###############
+
+    card_categories = card_categories_api(card_id)                           # <<<<<<###############
+    
+    return render_template('list_for_choice_dec_money.html', title="💳 Ваши категории", items=card_categories, base_name='categories', card=card)
+
+
+
+@app.route('/dec_money_card_and_category/<int:card_id>/<int:category_id>', methods=['GET', 'POST'])
+@login_required
+def dec_money_card_and_category(card_id, category_id):
+
+
+    subcard = subcard_by_card_and_category_id_api(card_id, category_id)     # <<<<<<###############
+
+    if request.method == 'POST':
+        money_amount = request.form.get('money_amount')
+
+        subcard_balance_dec(subcard, int(money_amount))                       # <<<<<<###############
+
+        flash("Деньги сняты!")
+        return redirect('/')
+
+    return render_template('dec_money_card_and_category.html')
+
+
 
 
 
@@ -710,78 +758,6 @@ def delete_template(template_id):
     flash("Шаблон удален.")
     return redirect(url_for('list_templates'))
 
-'''
-@app.route('/add_money_by_template/<int:card_id>', methods=['GET', 'POST'])
-@login_required
-def add_money_by_template(card_id):
-    card = card_by_id_api(card_id)
-    
-    if not card:
-        return "Карта не найдена", 404
-    
-    if card["owner_id"] != current_user.id:
-        return "Нет прав для доступа к этой карте", 403
-    
-    if request.method == 'POST':
-        template_id = request.form.get('template_id')
-        total_amount_str = request.form.get('total_amount')
-        
-        if not template_id or not total_amount_str:
-            flash("Выберите шаблон и укажите сумму")
-            return redirect(url_for('add_money_by_template', card_id=card_id))
-        
-        try:
-            template_id = int(template_id)
-            total_amount = int(total_amount_str)
-        except ValueError:
-            flash("Некорректные данные")
-            return redirect(url_for('add_money_by_template', card_id=card_id))
-        
-        template = template_by_id_api(template_id)
-        
-        if not template:
-            flash("Шаблон не найден")
-            return redirect(url_for('add_money_by_template', card_id=card_id))
-        
-        if template["owner_id"] != current_user.id:
-            flash("Нет прав для использования этого шаблона")
-            return redirect(url_for('add_money_by_template', card_id=card_id))
-        
-        # Распределяем деньги по категориям согласно шаблону
-        distributed_amounts = {}
-        
-        for category_id, percent in template["percents"].items():
-            amount_for_category = total_amount * percent // 100
-            distributed_amounts[category_id] = amount_for_category
-            
-            # Находим или создаем subcard для этой категории
-            subcard = subcard_by_card_and_category_id_api(card_id, category_id)
-            if not subcard:
-                subcard = add_subcard_api(card_id, category_id)
-            
-            # Добавляем деньги на subcard
-            subcard_balance_inc(subcard, amount_for_category)
-        
-        # Обновляем общий баланс карты
-        card_balance_change_api(card, total_amount)
-        
-        # Формируем сообщение о распределении
-        distribution_info = []
-        for category_id, amount in distributed_amounts.items():
-            category = category_by_id(category_id)
-            category_name = category["category_name"] if category else f"Категория {category_id}"
-            distribution_info.append(f"{category_name}: {amount} руб.")
-        
-        flash(f"На карту зачислено {total_amount} руб. по шаблону '{template}'. Распределение: {', '.join(distribution_info)}")
-        return redirect(url_for('list_cards'))
-    
-    # GET запрос - показываем форму
-    user_templates = user_templates_api(current_user)
-    return render_template('add_money_by_template.html', 
-                         card=card, 
-                         templates=user_templates, 
-                         category_by_id=category_by_id)
-'''
 
 @app.route('/add_money_by_template/<int:card_id>', methods=['GET', 'POST'])
 @login_required
@@ -827,6 +803,7 @@ def add_money_by_template(card_id):
 
         for category_id in template["percents"].keys():
             form_key = f"category_amount_{category_id}"
+            
             if form_key in request.form:
                 try:
                     amount_for_category = int(request.form[form_key])
@@ -863,11 +840,11 @@ def add_money_by_template(card_id):
 
     # GET-запрос: показать форму
     user_templates = user_templates_api(current_user)
-    print(card)
+    print(card, user_templates)
     return render_template(
         'add_money_to_card_by_template.html',
         card=card,
-        templates=user_templates, 
+        templates=user_templates,
         category_by_id=category_by_id)
 
 

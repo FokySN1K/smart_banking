@@ -58,8 +58,13 @@ button {
 .books{background:#059669;}
 .cards{background:#9333ea;}
 .categories{background:#f0db1c;}
+.templates{background: #56f78b;}
 .auth{background:#2563eb;}
 
+.cards-container {
+  display: flex;
+  gap: 10px;      /* расстояние между кнопками */
+}
 
 .home{ width: 320px;color: #56f78b;background:#700161;text-align: center;margin: 0 auto;}
 

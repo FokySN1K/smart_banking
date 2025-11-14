@@ -32,7 +32,7 @@
     <a class="edit" href="{{ url_for('edit_card', card_id=item['card_id']) }}">✏️ Изменить</a>
   </p>
   <form method="post" action="{{ url_for('delete_card', card_id=item['card_id']) }}">
-    <button type="submit">🗑 Удалить</button>
+    <button type="submit" card_id="{{ item.card_id }}" card_name="{{item.card_name}}" onclick="return confirm('Вы точно хотите удалить карту?')">🗑 Удалить</button>
   </form>
 
 </div>
@@ -40,5 +40,6 @@
 
 <a href="{{ url_for('add_card') }}" class="add" style="display:block;margin-bottom:12px;">➕ Добавить карту</a>
 <a href="/" class="back">⬅ Назад</a>
+
 
 {% endblock %}

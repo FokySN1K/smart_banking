@@ -272,6 +272,18 @@ def delete_template_by_id(template_id):
         DELETE FROM template WHERE id = %(id)s;
     """, params = {'id': template_id})
 
+@try_return_none
+def get_template_by_id(template_id):
+    """
+    Возвращает шаблон.
+    Аргумент: template_id.
+    """
+    return DB.fetch_one_returning("""
+        SELECT id, owner_id, percents, description
+        FROM template
+        WHERE id = %(id)s;
+    """, params = {'id': template_id})
+
 @try_return_bool
 def change_template_by_id(**kwargs):
     """
