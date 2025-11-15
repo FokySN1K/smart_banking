@@ -7,4 +7,5 @@
 
     <include file="_changelog/create_database_v_1_0.xml" relativeToChangelogFile="true"/>
 
+
 </databaseChangeLog>
