@@ -187,11 +187,13 @@ def category_by_id(category_id):
     print(data["category_name"])
     return data
 
+
 @app.route("/category_by_id/<int:category_id>", methods=['GET', 'POST'])
 def category_by_id_api(category_id):
     data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
     print(data["category_name"])
     return jsonify(data)
+
 
 def change_category(category, new_name, new_description):
     api.change_category_by_id(id=category['category_id'], name=new_name, description=new_description)
@@ -271,7 +273,6 @@ def user_templates_api(current_user):
     print(data)
 
     data = turples_templates_to_dicts(data)
-    
     return data
 
 
