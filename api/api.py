@@ -2,6 +2,13 @@ from .db import Database
 
 import functools
 
+"""
+Проверка существования субкарты в функциях зачисления/снятия/перевода денег перед изменением базы.
+Из логики работы фронтенда (вызова этих API) следует, что субкарта в этот момент есть.
+Для высокоуровневого API (сбор денег) эта проверка прописана явно, так что тоже проблем нет.
+"""
+CHECK_SUBCARD_EXISTS = False
+
 def try_return_none(func):
     """
     Декоратор, возвращающий результат выполнения функции или None при исключении.
@@ -201,9 +208,10 @@ def inc_money_to_subcard(**kwargs):
     """
     if kwargs["inc_amount"] <= 0:
         raise ValueError("inc_amount must be positive")
-    subcard = get_subcard_by_card_id_and_category_id(**kwargs)
-    if subcard is None:
-        raise LookupError("subcard not found")
+    if CHECK_SUBCARD_EXISTS:
+        subcard = get_subcard_by_card_id_and_category_id(**kwargs)
+        if subcard is None:
+            raise LookupError("subcard not found")
     DB.execute("""
         INSERT INTO transaction (card_id_from, category_id_from, card_id_to, category_id_to, amount, description)
         VALUES (NULL, NULL, %(card_id)s, %(category_id)s, %(inc_amount)s, %(description)s);
@@ -222,9 +230,10 @@ def dec_money_from_subcard(**kwargs):
     """
     if kwargs["dec_amount"] <= 0:
         raise ValueError("dec_amount must be positive")
-    subcard = get_subcard_by_card_id_and_category_id(**kwargs)
-    if subcard is None:
-        raise LookupError("subcard not found")
+    if CHECK_SUBCARD_EXISTS:
+        subcard = get_subcard_by_card_id_and_category_id(**kwargs)
+        if subcard is None:
+            raise LookupError("subcard not found")
     DB.execute("""
         INSERT INTO transaction (card_id_to, category_id_to, card_id_from, category_id_from, amount, description)
         VALUES (NULL, NULL, %(card_id)s, %(category_id)s, %(dec_amount)s, %(description)s);
@@ -275,8 +284,9 @@ def delete_template_by_id(template_id):
 @try_return_none
 def get_template_by_id(template_id):
     """
-    Возвращает шаблон.
+    Получает шаблон.
     Аргумент: template_id.
+    Возвращает строку из БД (кортеж) или None, если не найден или ошибка.
     """
     return DB.fetch_one_returning("""
         SELECT id, owner_id, percents, description
@@ -425,12 +435,13 @@ def transfer_money_between_subcards(**kwargs):
     """
     if kwargs["change_amount"] <= 0:
         raise ValueError("change_amount must be positive")
-    subcard_from = get_subcard_by_card_id_and_category_id(card_id = kwargs["card_id_from"], category_id = kwargs["category_id_from"])
-    if subcard_from is None:
-        raise LookupError("subcard_from not found")
-    subcard_to = get_subcard_by_card_id_and_category_id(card_id = kwargs["card_id_to"], category_id = kwargs["category_id_to"])
-    if subcard_to is None:
-        raise LookupError("subcard_to not found")
+    if CHECK_SUBCARD_EXISTS:
+        subcard_from = get_subcard_by_card_id_and_category_id(card_id = kwargs["card_id_from"], category_id = kwargs["category_id_from"])
+        if subcard_from is None:
+            raise LookupError("subcard_from not found")
+        subcard_to = get_subcard_by_card_id_and_category_id(card_id = kwargs["card_id_to"], category_id = kwargs["category_id_to"])
+        if subcard_to is None:
+            raise LookupError("subcard_to not found")
     DB.execute("""
         INSERT INTO transaction (card_id_from, category_id_from, card_id_to, category_id_to, amount, description)
         VALUES (%(card_id_from)s, %(category_id_from)s, %(card_id_to)s, %(category_id_to)s, %(change_amount)s, %(description)s);
@@ -501,6 +512,47 @@ def get_time_bound_transactions_by_category_id(**kwargs):
                OR category_id_to = %(category_id)s)
           AND timestamptz BETWEEN %(time_from)s AND %(time_to)s;
     """, params = kwargs)
+
+@try_return_bool
+def collect_category_money_on_one_subcard(**kwargs):
+    """
+    Собирает все деньги одной категории на одну карту.
+    Аргументы: card_id, category_id (именованные).
+    Опциональный аргумент (для логов): description (именованный).
+    Возвращает True, если не было критичных ошибок, иначе False.
+    Эта высокоуровневая функция в процессе работы вызывает низкоуровевые функции, которые обёрнуты в декораторы (поэтому ошибки от них по возможности игнорируются).
+    Требуется явная проверка существования субкарты, т.к. для дальнейшей работы нужны данные по субкарте, отсутствующие в аргументах.
+    """
+    # нужны дальше + не передаём возможный опциональный аргумент description через **kwargs
+    card_id = kwargs['card_id']
+    category_id = kwargs['category_id']
+    subcard = get_subcard_by_card_id_and_category_id(card_id = card_id, category_id = category_id)
+    if subcard is None:
+        raise LookupError("subcard not found or error")
+    subcard_id = subcard[0]
+    card = get_card_by_id(card_id)
+    if card is None:
+        raise LookupError("unexpected error")
+    owner_id = card[1]
+    owner_cards = get_active_cards_by_owner_id(owner_id)
+    if owner_cards is None:
+        raise LookupError("unexpected error")
+    if 'description' in kwargs:
+        description = kwargs['description']
+    else:
+        description = "Сбор всех денег одной категории на одну карту." # значение description по умолчанию
+    for another_card in owner_cards:
+        another_card_id = another_card[0]
+        if another_card_id == card_id: # пропускаем карту, на которую хотим перевести деньги
+            continue
+        another_subcard = get_subcard_by_card_id_and_category_id(card_id = another_card_id, category_id = category_id)
+        if another_subcard is None: # нет такой категории на такой карте или ошибка
+            continue
+        change_amount = another_subcard[3]
+        if change_amount <= 0: # хотим переводить только положительный баланс (логика согласована с функцией перевода денег)
+            continue
+        # не проверяем результат, т.е. не считаем критичной возможную ошибку тут, т.к. каждый вызов функции перевода - отдельная SQL транзакция (логика класса в db.py), в случае ошибки всё равно не сможем откатить уже прошедшие переводы
+        transfer_money_between_subcards(card_id_from = another_card_id, category_id_from = category_id, card_id_to = card_id, category_id_to = category_id, change_amount = change_amount, description = description)
 
 if __name__ == "__main__":
     import inspect
