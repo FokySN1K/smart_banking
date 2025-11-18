@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+
+{% block title %}Перевести средства между подкартами{% endblock %}
+
+{% block content %}
+
+
+<h1> 💳 Перевод средств</h1>
+
+<form method="post">
+<div class="item">
+<div class="item">
+
+    <select name="card_from" id="card-select-from">
+        <option value="">-- Выберите карту откуда --</option>
+        {% for card in cards %}
+            <option value="{{ card.card_id }}">{{ card.card_name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="category_from" id="category-select-from" disabled>
+        <option value="">-- Сначала выберите карту --</option>
+    </select>
+
+</div>
+
+<div class="item">
+
+    <select name="card_to" id="card-select-to">
+        <option value="">-- Выберите карту куда--</option>
+        {% for card in cards %}
+            <option value="{{ card.card_id }}">{{ card.card_name }}</option>
+        {% endfor %}
+    </select>
+    
+    <select name="category_to" id="category-select-to" disabled>
+        <option value="">-- Сначала выберите карту --</option>
+    </select>
+    
+</div>
+
+
+    
+        <label>Сумма перевода:</label>
+        <input type="number" name="money_amount" placeholder="Введите сумму" required>
+      
+    
+        <button style="margin-top: 10px;" type="submit">➕ Подтвердить </button>
+</div>
+</form>
+
+
+
+<script>
+    // Передаём словарь из Flask в JavaScript
+    const cardToCategories = {{ card_to_categories | tojson }};
+    
+    document.getElementById('card-select-from').addEventListener('change', function () {
+        const cardId = this.value;
+        const categorySelect = document.getElementById('category-select-from');
+    
+        if (!cardId) {
+            categorySelect.innerHTML = '<option value="">-- Сначала выберите карту --</option>';
+            categorySelect.disabled = true;
+            return;
+        }
+        
+
+        const categories = cardToCategories[cardId] || [];
+
+        if (categories.length === 0) {
+            categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';
+            categorySelect.disabled = false;
+            return;
+        }
+    
+        let options = '<option value="">-- Выберите категорию --</option>';
+        categories.forEach(cat => {
+            options += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+        });
+    
+        categorySelect.innerHTML = options;
+        categorySelect.disabled = false;
+    });
+
+    document.getElementById('card-select-to').addEventListener('change', function () {
+        const cardId = this.value;
+        const categorySelect = document.getElementById('category-select-to');
+    
+        if (!cardId) {
+            categorySelect.innerHTML = '<option value="">-- Сначала выберите карту --</option>';
+            categorySelect.disabled = true;
+            return;
+        }
+        
+
+        const categories = cardToCategories[cardId] || [];
+
+        if (categories.length === 0) {
+            categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';
+            categorySelect.disabled = false;
+            return;
+        }
+    
+        let options = '<option value="">-- Выберите категорию --</option>';
+        categories.forEach(cat => {
+            options += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+        });
+    
+        categorySelect.innerHTML = options;
+        categorySelect.disabled = false;
+    });
+    </script>
+
+
+
+
+{% endblock %}

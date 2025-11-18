@@ -171,8 +171,6 @@ def add_category_to_db(new_category):
     categories.append(data)
 
 
-
-
 def user_categories(current_user):
     data = api.get_active_categories_by_owner_id((current_user.id))
     print("Категории юзера", data)
@@ -222,6 +220,9 @@ def delete_category_api(category):
 def user_cards_api(current_user):
     data = api.get_active_cards_by_owner_id(current_user.id)
     print("Карты юзера", data)
+    if data is None:
+        flash("internal error")
+        return False
 
     return turples_cards_to_dicts(data)
 
@@ -247,7 +248,12 @@ def cards_categories_api(user_cards, subcards):
 
 
 def card_by_id_api(card_id):
-    return turple_cards_to_dict(api.get_card_by_id(card_id))
+    data = api.get_card_by_id(card_id)
+    if data is None:
+        flash("internal error")
+        return False
+
+    return turple_cards_to_dict(data)
 
 
 def add_card_api(card_name, description, current_user):
@@ -262,7 +268,6 @@ def delete_card_api(card):
 
 
 def add_subcard_api(card_id, category_id, description):
-
     return api.add_subcard(card_id=card_id, category_id=category_id, description=description)
 
 
@@ -320,6 +325,11 @@ def validate_percents(percents_dict):
     return sum(percents_dict.values()) == 100
 
 
+def transfer_money_between_subcards_api(card_from, category_from, card_to, category_to, money_amount):
+    
+    data = api.transfer_money_between_subcards(card_id_from=card_from, category_id_from=category_from, card_id_to=card_to, category_id_to=category_to, change_amount=money_amount, description="")
+    print(data, card_from, category_from, card_to, category_to, money_amount)
+    return data
 
 
 # ----------------------------
@@ -666,6 +676,44 @@ def dec_money_card_and_category(card_id, category_id):
     return render_template('dec_money_card_and_category.html')
 
 
+@app.route('/transfer_money_between_subcards', methods=['GET', 'POST'])
+@login_required
+def transfer_money_between_subcards():
+
+    cards = user_cards_api(current_user)
+
+    card_to_categories = {}
+    for card in cards:
+        card_to_categories[card['card_id']] = card_categories_api(card['card_id'])
+
+    if request.method == 'POST':
+        card_from     = request.form.get('card_from')
+        category_from = request.form.get('category_from')
+        card_to       = request.form.get('card_to')
+        category_to   = request.form.get('category_to')
+        money_amount  = request.form.get('money_amount')
+
+        if card_from and category_from and card_to and category_to and money_amount:
+            res = transfer_money_between_subcards_api(card_from, category_from, card_to, category_to, int(money_amount))
+
+            if not res:
+                flash("some internal error")
+            else:
+                flash("Деньги преведены!")
+        else:
+            flash("html error")
+        return redirect('/')
+
+    return render_template('transfer_money_between_subcards.html', cards=cards, card_to_categories=card_to_categories)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -879,6 +927,22 @@ def add_money_by_template(card_id):
         card=card,
         templates=user_templates,
         category_by_id=category_by_id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
