@@ -22,7 +22,43 @@
 </div>
 {% endfor %}
 
+
+<input type="checkbox" id="toggleList" style="margin-bottom: 20px;">
+<label for="toggleList">Показать список неактивных категорий</label>
+
+
+<ul id="myList" style="display: none;">
+
+  {% for item in inactive %}
+    <div class="item">
+      {% for key, value in item.items() %}
+        {% if key not in not_visible %}
+          <p><strong>{{ key }}:</strong> {{ value }}</p>
+        {% endif %}
+      {% endfor %}
+
+      <form method="post" action="{{ url_for('reactivate_category', category_id=item['category_id']) }}">
+        <button type="submit" onclick="return confirm('Вы точно хотите восстановить категорию?')"> Восстановить </button>
+      </form>
+
+
+    </div>
+  {% endfor %}
+
+</ul>
+
+
 <a href="{{ url_for('add_category') }}" class="add" style="display:block;margin-bottom:12px;">➕ Добавить категорию</a>
 <a href="/" class="back">⬅ Назад</a>
 
+<script>
+document.getElementById('toggleList').addEventListener('change', function() {
+    const list = document.getElementById('myList');
+    if (this.checked) {
+        list.style.display = 'block';
+    } else {
+        list.style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

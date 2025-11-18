@@ -183,7 +183,10 @@ def user_categories(current_user):
 
 
 def category_by_id(category_id):
-    data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
+    data = api.get_category_by_id(int(category_id))
+    if data is None:
+        return False
+    data = turple_categories_to_dict(data)
     print(data["category_name"])
     return data
 
@@ -193,6 +196,19 @@ def category_by_id_api(category_id):
     data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
     print(data["category_name"])
     return jsonify(data)
+
+
+def inactive_user_catgories(user):
+    data = api.get_inactive_categories_by_owner_id(user.id)
+    if data is None:
+        flash("internal error")
+        return None
+
+    return turples_categories_to_dicts(data)
+
+
+def reactivate_category_api(category_id):
+    return api.reactivate_category_by_id(category_id=category_id)
 
 
 def change_category(category, new_name, new_description):
@@ -381,8 +397,9 @@ def logout():
 def list_categories():
 
     cur_user_categories = user_categories(current_user)      # <<<<<<###############
+    curr_inactive_user_catgories = inactive_user_catgories(current_user)
 
-    return render_template('list_categories.html', title="💳 Ваши категории", items=cur_user_categories, base_name='categories', not_visible={"owner_id", "category_id", 'is_active'})
+    return render_template('list_categories.html', title="💳 Ваши категории", items=cur_user_categories, inactive=curr_inactive_user_catgories, base_name='categories', not_visible={"owner_id", "category_id", 'is_active'})
 
 
 
@@ -448,6 +465,21 @@ def delete_category(category_id):
     return redirect(url_for('list_categories'))
 
 
+
+@app.route('/reactivate_category/<int:category_id>', methods=['POST'])
+@login_required
+def reactivate_category(category_id):
+    category = category_by_id(category_id)                    # <<<<<<###############
+
+    if not category:
+        return "Категория не найдена", 404
+
+    if category["owner_id"] != current_user.id:
+        return "Нет прав для удаления этой категории", 403
+
+    reactivate_category_api(category['category_id'])
+    flash("Категория восстановлена.")
+    return redirect(url_for('list_categories'))
 
 
 
