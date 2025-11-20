@@ -27,12 +27,11 @@ login_limit = 30
 name_limit = 50
 
 class User(UserMixin):
-    def __init__(self, id, login, password_hash, salt, name):
+    def __init__(self, id, login, password, name):
         self.id = id
         self.login = login
+        self.password = password
         self.name = name
-        self.password_hash = password_hash
-        self.salt = salt
 
     def get_id(self):
         return str(self.id)
@@ -144,7 +143,11 @@ def create_user(login, name, password):
     salt = os.urandom(8).hex()
     password_hash = hash_password(password, salt)
 
-    ret = api.add_user(login=login, password_hash=password_hash, password_salt=salt, name=name)                     # <<<<<<###############
+    enc_password = str(password_hash)+':'+str(salt)
+
+    print("enc_password:", enc_password)
+
+    ret = api.add_user(login=login, password=enc_password, name=name)                     # <<<<<<###############
 
     print(ret)
 
@@ -214,7 +217,7 @@ def change_category(category, new_name, new_description):
 
 
 def delete_category_api(category):
-    api.deactivate_category_by_id(category['category_id'])
+    api.delete_category_by_id(category['category_id'])
 
 
 def user_cards_api(current_user):
@@ -277,11 +280,11 @@ def subcard_by_card_and_category_id_api(card_id, category_id):
 
 
 def subcard_balance_inc(subcard, change):
-    api.inc_money_to_subcard(card_id=subcard['card_id'], category_id=subcard['category_id'], inc_amount=change, description='')
+    api.inc_money_to_subcard(subcard_id=subcard['subcard_id'], inc_amount=change, description='')
 
 
 def subcard_balance_dec(subcard, change):
-    api.dec_money_from_subcard(card_id=subcard['card_id'], category_id=subcard['category_id'], dec_amount=change, description='')
+    api.dec_money_from_subcard(subcard_id=subcard['subcard_id'], dec_amount=change, description='')
 
 
 def is_subcard_exist(card_id, category_id):
@@ -370,8 +373,13 @@ def register():
             flash('Логин уже занят!')
             return redirect(url_for('register'))
         
-        create_user(login_name, name, password)                  # <<<<<<###############
-        flash('Регистрация прошла успешно! Войдите.')
+        res = create_user(login_name, name, password)                  # <<<<<<###############
+        
+        if res:
+            flash('Регистрация прошла успешно! Войдите.')
+        else:
+            flash('Что-то пошло не так, обратитесь к админу')
+
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -383,7 +391,18 @@ def login():
         password = request.form.get('password')
         user = user_by_login(login_name)             # <<<<<<###############
 
-        if user and user.password_hash == hash_password(password, user.salt):
+        if user is None:
+            flash("cannot find user in db")
+            return redirect(url_for('login'))
+
+
+        pswd_hash_and_salt = user.password.split(':')
+
+        if len(pswd_hash_and_salt) != 2:
+            flash("wrong structure of user in db, cant resolve")
+            return redirect(url_for('login'))
+
+        if user and pswd_hash_and_salt[0] == hash_password(password, pswd_hash_and_salt[1]):
             login_user(user)
             flash('Успешный вход!')
             return redirect(url_for('index'))
@@ -899,24 +918,23 @@ def add_money_by_template(card_id):
             total_amount = total_from_form  # можно скорректировать, либо оставить
 
         # 🏦 Обновляем субкарты и баланс
-        for category_id, amount_for_category in distributed_amounts.items():
-            subcard = subcard_by_card_and_category_id_api(card_id, category_id)
-            if not subcard:
-                subcard = add_subcard_api(card_id, category_id)
-            subcard_balance_inc(subcard, amount_for_category)
+        res = api.apply_distribution_to_card(card['card_id'], distributed_amounts)
 
+        if res:
+            # 🧾 Формируем сообщение о распределении
+            distribution_info = []
+            for category_id, amount in distributed_amounts.items():
+                category = category_by_id(category_id)
+                category_name = category["category_name"] if category else f"Категория {category_id}"
+                distribution_info.append(f"{category_name}: {amount} руб.")
 
-        # 🧾 Формируем сообщение о распределении
-        distribution_info = []
-        for category_id, amount in distributed_amounts.items():
-            category = category_by_id(category_id)
-            category_name = category["category_name"] if category else f"Категория {category_id}"
-            distribution_info.append(f"{category_name}: {amount} руб.")
+            flash(
+                f"На карту зачислено {total_amount} руб. по шаблону #{template['template_id']}. "
+                f"Распределение: {', '.join(distribution_info)}"
+            )
+        else:
+            flash("Что-то пошло не так!!!!!!!!")
 
-        flash(
-            f"На карту зачислено {total_amount} руб. по шаблону #{template['template_id']}. "
-            f"Распределение: {', '.join(distribution_info)}"
-        )
         return redirect(url_for('list_cards'))
 
     # GET-запрос: показать форму
