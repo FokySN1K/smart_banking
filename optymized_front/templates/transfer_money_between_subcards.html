@@ -55,6 +55,7 @@
 <script>
     // Передаём словарь из Flask в JavaScript
     const cardToCategories = {{ card_to_categories | tojson }};
+    const allCategories = {{ all_categories | tojson }};
     
     document.getElementById('card-select-from').addEventListener('change', function () {
         const cardId = this.value;
@@ -84,6 +85,7 @@
         categorySelect.disabled = false;
     });
 
+
     document.getElementById('card-select-to').addEventListener('change', function () {
         const cardId = this.value;
         const categorySelect = document.getElementById('category-select-to');
@@ -94,8 +96,7 @@
             return;
         }
         
-
-        const categories = cardToCategories[cardId] || [];
+        const categories = allCategories['all'] || [];
 
         if (categories.length === 0) {
             categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';

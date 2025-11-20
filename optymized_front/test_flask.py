@@ -705,7 +705,10 @@ def transfer_money_between_subcards():
     card_to_categories = {}
     for card in cards:
         card_to_categories[card['card_id']] = card_categories_api(card['card_id'])
-
+    
+    all_categories = {}
+    all_categories['all'] = user_categories(current_user)
+    print(categories)
     if request.method == 'POST':
         card_from     = request.form.get('card_from')
         category_from = request.form.get('category_from')
@@ -724,7 +727,7 @@ def transfer_money_between_subcards():
             flash("html error")
         return redirect('/')
 
-    return render_template('transfer_money_between_subcards.html', cards=cards, card_to_categories=card_to_categories)
+    return render_template('transfer_money_between_subcards.html', cards=cards, card_to_categories=card_to_categories, all_categories=all_categories)
 
 
 
