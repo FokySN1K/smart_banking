@@ -170,13 +170,13 @@ def user_by_login(login):
 def add_category_to_db(new_category):
 
     data = api.add_category(owner_id=new_category["owner_id"], name=new_category["category_name"], description=new_category["description"])
-    print(data)
+
     categories.append(data)
 
 
 def user_categories(current_user):
     data = api.get_active_categories_by_owner_id((current_user.id))
-    print("Категории юзера", data)
+
     result = turples_categories_to_dicts(data)
     return result
 
@@ -188,14 +188,14 @@ def category_by_id(category_id):
     if data is None:
         return False
     data = turple_categories_to_dict(data)
-    print(data["category_name"])
+
     return data
 
 
 @app.route("/category_by_id/<int:category_id>", methods=['GET', 'POST'])
 def category_by_id_api(category_id):
     data = turple_categories_to_dict(api.get_category_by_id(int(category_id)))
-    print(data["category_name"])
+
     return jsonify(data)
 
 
@@ -222,7 +222,7 @@ def delete_category_api(category):
 
 def user_cards_api(current_user):
     data = api.get_active_cards_by_owner_id(current_user.id)
-    print("Карты юзера", data)
+    
     if data is None:
         flash("internal error")
         return False
@@ -233,16 +233,15 @@ def user_cards_api(current_user):
 def subcards_by_card_id(card_id):
     data = api.get_active_subcards_by_card_id(card_id)
 
-    print("сабкарты", data)
     card_subcards = turples_subcards_to_dicts(data)
-    print("сабкарты словари", card_subcards)
+    
     return card_subcards
 
 
 def card_categories_api(card_id):
     data = api.get_active_subcards_by_card_id(card_id)
     card_subcards = turples_subcards_to_dicts(data)
-    print("сабкарты словари", card_subcards)
+    
     return [category_by_id(s['category_id']) for s in card_subcards]
 
 
@@ -267,7 +266,7 @@ def add_card_api(card_name, description, current_user):
 
 
 def delete_card_api(card):
-    api.delete_card_by_id(card['card_id'])
+    return api.delete_card_by_id(card['card_id'])
 
 
 def add_subcard_api(card_id, category_id, description):
@@ -559,7 +558,8 @@ def delete_card(card_id):
     if card["owner_id"] != current_user.id:
         return "Нет прав для удаления этой карты", 403
     
-    delete_card_api(card)
+    res = delete_card_api(card)
+    print("deleting card result:", res)
     flash("Карта удалена.")
     return redirect(url_for('list_cards'))
 
@@ -686,6 +686,7 @@ def dec_money_card_and_category(card_id, category_id):
 
     if request.method == 'POST':
         money_amount = request.form.get('money_amount')
+
 
         subcard_balance_dec(subcard, int(money_amount))                       # <<<<<<###############
 

@@ -203,12 +203,12 @@ def delete_card_by_id(card_id, description = None):
             UPDATE subcard
             SET amount = 0
             WHERE card_id = %(card_id)s AND amount != 0
-        ),
-        insert_logs AS (
+        )
+        
             INSERT INTO transaction (card_id_to, category_id_to, card_id_from, category_id_from, amount, description)
             SELECT NULL, NULL, %(card_id)s, category_id, amount, %(description)s
             FROM subcards_to_process
-        );
+        ;
     """, params = {'card_id': card_id, 'description': description})
 
 @try_return_bool
@@ -327,12 +327,12 @@ def delete_category_by_id(category_id, description = None):
             UPDATE subcard
             SET amount = 0
             WHERE category_id = %(category_id)s AND amount != 0
-        ),
-        insert_logs AS (
+        )
+    
             INSERT INTO transaction (card_id_to, category_id_to, card_id_from, category_id_from, amount, description)
             SELECT NULL, NULL, card_id, %(category_id)s, amount, %(description)s
             FROM subcards_to_process
-        );
+        ;
     """, params = {'category_id': category_id, 'description': description})
 
 @try_return_bool
@@ -609,22 +609,19 @@ def transfer_money_between_subcards(**kwargs):
         ),
         to_upsert AS (
             INSERT INTO subcard (card_id, category_id, amount, description, is_active)
-            SELECT %(card_id_to)s, %(category_id_to)s, 0, 'Создано автоматически при переводе.', true
+            SELECT %(card_id_to)s, %(category_id_to)s, %(change_amount)s, 'Создано автоматически при переводе.', true
             FROM from_subcard  -- INSERT выполнится только если from_subcard не пуст (т.е. проверка прошла)
             ON CONFLICT (card_id, category_id)
-            DO UPDATE SET is_active = true  -- При конфликте (существующая субкарта): активируем, но НЕ меняем amount и description
+            DO UPDATE SET is_active = true,  -- При конфликте (существующая субкарта): активируем и сразу меняем amount, но не description
+                    amount = subcard.amount + %(change_amount)s
             RETURNING id AS to_id
         ),
         transfer_out AS (
             UPDATE subcard 
             SET amount = amount - %(change_amount)s 
             WHERE id = (SELECT from_id FROM from_subcard)
-        ),
-        transfer_in AS (
-            UPDATE subcard 
-            SET amount = amount + %(change_amount)s 
-            WHERE id = (SELECT to_id FROM to_upsert)
         )
+
         INSERT INTO transaction (card_id_from, category_id_from, card_id_to, category_id_to, amount, description)
         SELECT from_card_id, from_category_id, %(card_id_to)s, %(category_id_to)s, %(change_amount)s, %(description)s
         FROM from_subcard;
