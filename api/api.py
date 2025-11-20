@@ -91,12 +91,12 @@ def get_user_by_login(login):
 def change_user_by_id(**kwargs):
     """
     Меняет пароль и/или имя пользователя.
-    Аргументы: id, password_hash, password_salt, name (именованные).
+    Аргументы: id, password, name (именованные).
     Возвращает True при успехе, иначе False.
     """
     DB.execute("""
         UPDATE "user"
-        SET password_hash = %(password_hash)s, password_salt = %(password_salt)s, name = %(name)s
+        SET password = %(password)s, name = %(name)s
         WHERE id = %(id)s;
     """, params = kwargs)
 
@@ -954,3 +954,4 @@ if __name__ == "__main__":
     for name, obj in list(globals().items()):
         if inspect.isfunction(obj):
             help(obj)
+
