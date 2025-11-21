@@ -615,6 +615,7 @@ def add_card():
 #------------------- Транзакции ---------------
 
 
+##################### INC TRANSACTION ######################
 
 @app.route('/add_money_general')
 @login_required
@@ -655,6 +656,7 @@ def add_money_card_and_category(card_id, category_id):
 
 
 
+##################### DEC TRANSACTION ######################
 
 @app.route('/dec_money_general')
 @login_required
@@ -696,6 +698,9 @@ def dec_money_card_and_category(card_id, category_id):
     return render_template('dec_money_card_and_category.html')
 
 
+
+##################### TRANSFERING TRANSACTION ######################
+
 @app.route('/transfer_money_between_subcards', methods=['GET', 'POST'])
 @login_required
 def transfer_money_between_subcards():
@@ -708,6 +713,7 @@ def transfer_money_between_subcards():
     
     all_categories = {}
     all_categories['all'] = user_categories(current_user)
+    
     print(categories)
     if request.method == 'POST':
         card_from     = request.form.get('card_from')
@@ -728,6 +734,80 @@ def transfer_money_between_subcards():
         return redirect('/')
 
     return render_template('transfer_money_between_subcards.html', cards=cards, card_to_categories=card_to_categories, all_categories=all_categories)
+
+
+
+################### COLLECTING TRANSACTION ######################
+
+@app.route('/collect_category_money_on_fixed_card/<card_id>', methods=['GET', 'POST'])
+@login_required
+def collect_category_money_on_fixed_card(card_id):
+
+    card = card_by_id_api(card_id)
+    categories = user_categories(current_user)
+
+    return render_template('collect_category_money_on_one_card.html', card=card, category=None, categories=categories)
+
+
+
+
+@app.route('/collect_fixed_category_money_on_one_card/<category_id>', methods=['GET', 'POST'])
+@login_required
+def collect_fixed_category_money_on_one_card(category_id):
+
+    cards = user_cards_api(current_user)
+    category = category_by_id(category_id)
+
+    return render_template('collect_category_money_on_one_card.html', card=None, category=category, cards=cards)
+
+
+
+@app.route('/collect_category_money_on_one_card', methods=['POST'])
+@login_required
+def collect_category_money_on_one_card():
+
+    card_id     = request.form.get('card_id')
+    category_id = request.form.get('category_id')
+
+
+    res = api.collect_category_money_on_one_card(card_id=int(card_id), category_id=int(category_id))
+
+    print(card_id, category_id, res)
+    if res:
+        flash('Money collected successfully')
+    else:
+        flash('something gone wrong')
+    
+    return redirect('/')
+
+
+##################### TRANSFERING FROM ONE CATEGORY TO NEW TRANSACTION ######################
+
+
+@app.route('/delete_category_and_transfer_money_to_new/<category_id>', methods=['GET', 'POST'])
+@login_required
+def delete_category_and_transfer_money_to_new(category_id):
+
+    category = category_by_id(category_id)
+
+    if request.method == 'POST':
+        new_category_name        = request.form.get('new_category_name')
+        new_category_description = request.form.get('new_category_description')
+
+        res = api.delete_category_and_transfer_money_to_new(old_category_id=int(category_id), new_category_name=new_category_name, new_category_description=new_category_description)
+
+        print(category_id, new_category_name, new_category_description, res)
+
+        if res:
+            flash('Transfering completed successfully')
+        else:
+            flash('something gone wrong')
+        
+        return redirect('/categories')
+    
+    return render_template('delete_category_and_transfer_money_to_new.html', category=category)
+
+
 
 
 

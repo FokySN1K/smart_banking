@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Сбор средств{% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+    <form action="/collect_category_money_on_one_card" method="post">
+    {% if card %}
+        <!-- Если param_a зафиксирован, скрываем его -->
+        <input type="hidden" name="card_id" value="{{ card.card_id }}">
+        <h1 style="text-align:center;">Сбор категории на карту: {{ card.card_name }} </h1>
+        <label>Выберите категорию:</label>
+        <select name="category_id" required>
+            {% for c in categories %}
+              <option value="{{ c["category_id"] }}">{{ c["category_name"] }}</option>
+            {% endfor %}
+        </select>
+
+    {% elif category %}
+        <!-- Если param_b зафиксирован, скрываем его -->
+        <input type="hidden" name="category_id" value="{{ category.category_id }}">
+        <h1 style="text-align:center;">Сбор категории: {{ category.category_name }}  на одну карту </h1>
+        <label>Выберите карту:</label>
+        <select name="card_id" required>
+            {% for c in cards %}
+              <option value="{{ c["card_id"] }}">{{ c["card_name"] }}</option>
+            {% endfor %}
+        </select>
+
+    {% else %}
+        <!-- Оба параметра неизвестны — можно отобразить оба поля -->
+        <h1 style="text-align:center;">Сбор категории на карту </h1>
+
+        <label>Выберите категорию:</label>
+        <select name="category_id" required>
+            {% for c in categories %}
+              <option value="{{ c["category_id"] }}">{{ c["category_name"] }}</option>
+            {% endfor %}
+        </select>
+        <label>Выберите карту:</label>
+        <select name="card_id" required>
+            {% for c in cards %}
+              <option value="{{ c["card_id"] }}">{{ c["card_name"] }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+
+    
+    <button type="submit" style="margin-top: 20px;">Отправить</button>
+
+
+    {% if card %}
+    <a class="b" href="{{ url_for('list_cards') }}">⬅ Назад к списку карт</a>
+    {% endif %}
+
+    {% if category %}
+    <a class="b" href="{{ url_for('list_categories') }}">⬅ Назад к списку категорий</a>
+    {% endif %}
+
+    </form>
+</body>
+
+
+  {% endblock %}

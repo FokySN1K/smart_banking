@@ -1,6 +1,6 @@
 
 body{font-family:system-ui;background:#f7fafc;display:flex;align-items:center;justify-content:center;height:100vh;}
-.adding_body{font-family:system-ui;background:#f7fafc;display: block;align-items:center;justify-content:center;height:0vh;padding: 40px;}
+.adding_body{font-family:system-ui;background:#f7fafc;align-items:center;justify-content:center;height:0vh;padding: 40px;}
 
 a{display:block;margin:10px 0;text-decoration:none;padding:10px;border-radius:8px;color:white;font-weight:600;}
 

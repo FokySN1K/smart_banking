@@ -13,11 +13,20 @@
     {% endif %}
   {% endfor %}
 
+  <p>
+    <a href="{{ url_for('collect_fixed_category_money_on_one_card', category_id=item['category_id']) }}"> Собрать эту категорию на одной карте </a>
+  </p>
+  <p>
+    <a href="{{ url_for('delete_category_and_transfer_money_to_new', category_id=item['category_id']) }}"> Перенести средства этой категории на новую </a>
+  </p>
+
+  
+
+  <a class="edit" href="{{ url_for('edit_category', category_id=item['category_id']) }}">✏️ Изменить</a>
+
   <form method="post" action="{{ url_for('delete_category', category_id=item['category_id']) }}">
     <button type="submit" onclick="return confirm('Вы точно хотите удалить категорию?')">🗑 Удалить</button>
   </form>
-
-  <a class="edit" href="{{ url_for('edit_category', category_id=item['category_id']) }}">✏️ Изменить</a>
 
 </div>
 {% endfor %}

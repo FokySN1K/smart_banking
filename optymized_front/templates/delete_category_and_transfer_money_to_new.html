@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+
+{% block title %} Перенести все средства этой категории в новую {% endblock %}
+
+{% block content %}
+
+<body class="adding_body">
+
+
+    <h1 style="text-align:center;">Перевод с категории "{{ category.category_name }}" на новую</h1>
+    
+    <form method="post">
+
+    <label>Название новой категории:</label>
+    <input type="text" name="new_category_name" placeholder="Введите название" required>
+    <label>Описание новой категоръии:</label>
+    <input type="text" name="new_category_description" placeholder="Введите описание" required>
+
+    <button type="submit"> Перевести </button>
+  </form>
+
+  <a class="b" href="/categories">⬅ Назад к списку</a>
+
+</body>
+{% endblock %}
