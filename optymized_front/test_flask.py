@@ -612,6 +612,17 @@ def add_card():
 
     return render_template('add_card.html', categories=categories)
 
+
+
+@app.route('/manage_card/<int:card_id>', methods=['GET'])
+@login_required
+def manage_card(card_id):
+    card = card_by_id_api(card_id)
+
+    return render_template('manage_card.html', card=card)
+
+
+
 #------------------- Транзакции ---------------
 
 

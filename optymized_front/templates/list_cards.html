@@ -23,17 +23,9 @@
   {% endif %}
 
   <p>
-    <a href="{{ url_for('collect_category_money_on_fixed_card', card_id=item['card_id']) }}"> Собрать категорию на этой карте </a>
+    <a href="{{ url_for('manage_card', card_id=item['card_id']) }}"> Управление картой </a>
   </p>
-  <p>
-    <a href="{{ url_for('add_category_to_card', card_id=item['card_id']) }}">+ Добавить категорию на карту</a>
-  </p>
-  <p>
-    <a href="{{ url_for('add_money_by_template', card_id=item['card_id']) }}">+ Зачислить деньги по шаблону</a>
-  </p>
-  <p>
-    <a class="edit" href="{{ url_for('edit_card', card_id=item['card_id']) }}">✏️ Изменить</a>
-  </p>
+
   <form method="post" action="{{ url_for('delete_card', card_id=item['card_id']) }}">
     <button type="submit" card_id="{{ item.card_id }}" card_name="{{item.card_name}}" onclick="return confirm('Вы точно хотите удалить карту?')">🗑 Удалить</button>
   </form>
