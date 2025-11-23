@@ -9,9 +9,9 @@
 <div class="card">
 <h1 style="text-align:center;">Управление картой {{card['card_name']}}</h1>
 
-<div class="cards-container">
-    <a href="url_for('add_money_card', card_id=card.card_id)" class="cards" style="background-color: rgb(51, 214, 51);color: aliceblue;">💳 Зачислить деньги</a>
-    <a href="url_for('dec_money_card', card_id=card.card_id)" class="cards" style="background-color: brown;color: aliceblue;">💳 Снять деньги</a>
+  <div class="cards-container">
+    <a href="{{ url_for('add_money_card', card_id=card['card_id']) }}" class="cards" style="background-color: rgb(51, 214, 51);color: aliceblue;">💳 Зачислить деньги</a>
+    <a href="{{ url_for('dec_money_card', card_id=card['card_id']) }}" class="cards" style="background-color: brown;color: aliceblue;">💳 Снять деньги</a>
   </div>
 
   <p>

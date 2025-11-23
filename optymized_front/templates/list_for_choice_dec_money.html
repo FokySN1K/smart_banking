@@ -40,7 +40,9 @@
         </div>
             {% endfor %}
         
-            <a href="{{ url_for('dec_money_general') }}" class="back">⬅ Назад</a>
+            {% if request.referrer and request.referrer != request.url %}
+                <a href="{{ request.referrer }}" class="back">⬅ Назад</a>
+            {% endif %}
         {% endif %}
   
   </body>

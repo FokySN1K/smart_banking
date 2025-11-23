@@ -180,8 +180,6 @@ def user_categories(current_user):
     result = turples_categories_to_dicts(data)
     return result
 
-    #return [{k: v for k, v in c.items() if k not in {"owner_id"}} for c in categories if c["owner_id"] == current_user.id]
-
 
 def category_by_id(category_id):
     data = api.get_category_by_id(int(category_id))
@@ -818,6 +816,33 @@ def delete_category_and_transfer_money_to_new(category_id):
     
     return render_template('delete_category_and_transfer_money_to_new.html', category=category)
 
+
+##################### TRANSFERING FROM ONE CATEGORY TO EXISTING TRANSACTION ######################
+
+
+@app.route('/delete_category_and_transfer_money_to_existing/<category_id>', methods=['GET', 'POST'])
+@login_required
+def delete_category_and_transfer_money_to_existing(category_id):
+
+    category   = category_by_id(category_id)
+
+    categories = user_categories(current_user)
+
+    if request.method == 'POST':
+        new_category_id = request.form.get('category_id')
+
+        res = api.delete_category_and_transfer_money_to_existing(old_category_id=int(category_id), new_category_id=new_category_id)
+
+        print(category_id, res)
+
+        if res:
+            flash('Transfering completed successfully')
+        else:
+            flash('something gone wrong')
+        
+        return redirect('/categories')
+    
+    return render_template('delete_category_and_transfer_money_to_existing.html', category=category, categories=categories)
 
 
 

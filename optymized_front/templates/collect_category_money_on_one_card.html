@@ -21,7 +21,7 @@
     {% elif category %}
         <!-- Если param_b зафиксирован, скрываем его -->
         <input type="hidden" name="category_id" value="{{ category.category_id }}">
-        <h1 style="text-align:center;">Сбор категории: {{ category.category_name }}  на одну карту </h1>
+        <h1 style="text-align:center;">Сбор категории: "{{ category.category_name }}"  на одну карту </h1>
         <label>Выберите карту:</label>
         <select name="card_id" required>
             {% for c in cards %}
