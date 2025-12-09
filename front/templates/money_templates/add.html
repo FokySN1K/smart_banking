@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Новый шаблон{% endblock %}
+
+{% block content %}
+    <h1>➕ Создать шаблон распределения</h1>
+    <p class="context-hint">Сумма процентов должна быть ровно 100%.</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Описание шаблона</label>
+            <input type="text" name="template_description" required placeholder="Например: «Зарплата»">
+        </div>
+
+        {% for cat in categories %}
+            <div class="form-group">
+                <label>{{ cat[2] }}</label>
+                <input type="number" name="percent_{{ cat[0] }}" min="0" max="100" placeholder="Процент">
+            </div>
+        {% endfor %}
+
+        <button type="submit">Создать шаблон</button>
+        <a href="{{ url_for('money_templates.list_templates') }}" class="cancel-link">Отмена</a>
+    </form>
+{% endblock %}

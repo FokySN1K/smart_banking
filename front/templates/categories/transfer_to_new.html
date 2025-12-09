@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Перевод на новую категорию{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>🔄 Перевести средства из «{{ category[2] }}»</h1>
+        <a href="{{ url_for('categories.list_categories') }}"><button>← Назад</button></a>
+    </div>
+    <p class="context-hint">Старая категория останется активной, но с нулевым балансом.</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Название новой категории</label>
+            <input type="text" name="new_category_name" required>
+        </div>
+        <div class="form-group">
+            <label>Описание (опционально)</label>
+            <input type="text" name="new_category_description">
+        </div>
+        <button type="submit">Создать и перевести</button>
+    </form>
+{% endblock %}

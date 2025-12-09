@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Зачисление по шаблону{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>📊 Зачислить по шаблону</h1>
+        <a href="{{ url_for('cards.manage', card_id=card.card_id) }}"><button>← Назад к карте</button></a>
+    </div>
+
+    <p class="context-hint">Карта: <strong>{{ card.card_name }}</strong></p>
+
+    {% if templates %}
+        <form method="POST">
+            <div class="form-group">
+                <label>Выберите шаблон</label>
+                <select name="template_id" required>
+                    <option value="">— Выберите шаблон —</option>
+                    {% for t in templates %}
+                        <option value="{{ t.template_id }}">
+                            {% if t.description %}{{ t.description }}{% else %}Шаблон #{{ t.template_id }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Общая сумма зачисления (₽)</label>
+                <input type="number" name="total_amount" min="1" required placeholder="Например: 10000">
+            </div>
+
+            <button type="submit">Зачислить по шаблону</button>
+        </form>
+    {% else %}
+        <p class="empty-state">У вас нет шаблонов распределения. <a href="{{ url_for('money_templates.add') }}">Создать →</a></p>
+    {% endif %}
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectTemplate = document.getElementById('template_id');
+        const inputAmount = document.getElementById('total_amount');
+        const previewBtn = document.getElementById('preview-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const distContainer = document.getElementById('distribution-container');
+        const distList = document.getElementById('distribution-list');
+    
+        previewBtn.addEventListener('click', async () => {  // сделаем обработчик async
+        const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
+        const amount = parseInt(inputAmount.value);
+        const percentsData = templateOption.dataset.percents ? JSON.parse(templateOption.dataset.percents) : null;
+    
+        if (!templateOption.value || !amount || !percentsData) {
+            alert('Выберите шаблон и укажите сумму');
+            return;
+        }
+    
+        distList.innerHTML = '';
+    
+        for (const [category_id, percent] of Object.entries(percentsData)) {
+            const amountForCat = Math.floor(amount * percent / 100);
+            const row = document.createElement('div');
+            row.classList.add('distribution-row');
+    
+            const data = await category_by_id(category_id);  // ✅ теперь await работает
+            row.innerHTML = `
+                <span>Категория ${data.category_name} (${percent}%)</span>
+                <input type="number" name="category_amount_${data.category_id}" value="${amountForCat}" min="0">
+            `;
+            distList.appendChild(row);
+        }
+    
+        distContainer.style.display = 'block';
+        submitBtn.style.display = 'inline-block';
+    });
+    });
+</script>
+{% endblock %}

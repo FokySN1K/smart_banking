@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Закрыть категорию + перевести в существующую{% endblock %}
+
+{% block content %}
+    <h1>⚠️ Закрыть категорию «{{ category.category_name }}»</h1>
+    <p class="context-hint">Все средства будут переведены в выбранную категорию.</p>
+    <form method="POST">
+        <div class="form-group">
+            <label>Целевая категория</label>
+            <select name="category_id" required>
+                <option value="">— Выберите —</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-danger">Закрыть и перевести</button>
+        <a href="{{ url_for('categories.list_categories') }}" class="cancel-link">Отмена</a>
+    </form>
+{% endblock %}

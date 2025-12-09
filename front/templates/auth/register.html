@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+    <h1>📝 Создать аккаунт</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="login">Логин <span class="hint">(до 30 символов)</span></label>
+            <input type="text" id="login" name="login" maxlength="30" required>
+        </div>
+        <div class="form-group">
+            <label for="name">Имя <span class="hint">(до 50 символов)</span></label>
+            <input type="text" id="name" name="name" maxlength="50" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+    <p class="form-footer">
+        Уже есть аккаунт? <a href="{{ url_for('auth.login') }}">Войти</a>
+    </p>
+{% endblock %}

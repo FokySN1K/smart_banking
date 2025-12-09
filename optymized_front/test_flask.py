@@ -243,8 +243,25 @@ def card_categories_api(card_id):
     return [category_by_id(s['category_id']) for s in card_subcards]
 
 
-def cards_categories_api(user_cards, subcards):
-    return {c['card_id']: {category_by_id(s['category_id'])['category_name']: s['money_amount'] for s in subcards if s['card_id'] == c['card_id']} for c in user_cards} 
+def user_subcards(current_user):
+    
+    data = api.get_all_subcards_by_user_id(current_user.id)
+
+    if data:
+        data = turples_subcards_to_dicts(data)
+
+    return data
+
+def cards_categories_api(current_user):
+    categories = user_categories(current_user)
+    cards      = user_cards_api(current_user)
+    subcards   = user_subcards(current_user)
+    
+    category_by_id = {}
+    for c in categories:
+        category_by_id[c['category_id']] = c
+
+    return {c['card_id']: [category_by_id[s['category_id']] for s in subcards if s['card_id'] == c['card_id']] for c in cards} 
 
 
 def card_by_id_api(card_id):
@@ -715,10 +732,7 @@ def dec_money_card_and_category(card_id, category_id):
 def transfer_money_between_subcards():
 
     cards = user_cards_api(current_user)
-
-    card_to_categories = {}
-    for card in cards:
-        card_to_categories[card['card_id']] = card_categories_api(card['card_id'])
+    card_to_categories = cards_categories_api(current_user)
     
     all_categories = {}
     all_categories['all'] = user_categories(current_user)

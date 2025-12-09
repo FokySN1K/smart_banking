@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Управление картой{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>💳 {{ card.card_name }}</h1>
+        <a href="{{ url_for('cards.list_cards') }}"><button>← Назад к картам</button></a>
+    </div>
+
+    <p class="card-desc"><strong>Описание:</strong> {{ card.description or '—' }}</p>
+
+    <h2>Категории</h2>
+    {% if subcards %}
+        <div class="category-list compact">
+            {% for sc in subcards %}
+                <div class="category-item">
+                    <div class="item-title">{{ sc.category_name }}</div>
+                    <div class="item-desc">Баланс: <strong>{{ sc.amount }} ₽</strong></div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">Нет привязанных категорий. <a href="{{ url_for('cards.add_category_to_card', card_id=card.card_id) }}">Добавить →</a></p>
+    {% endif %}
+
+    <div class="actions" style="margin-top: 24px;">
+        <a href="{{ url_for('cards.add_money_step2', card_id=card.card_id) }}" class="btn-secondary">📥 Пополнить</a>
+        <a href="{{ url_for('cards.dec_money_step2', card_id=card.card_id) }}" class="btn-secondary">📤 Списать</a>
+        <a href="{{ url_for('cards.add_by_template', card_id=card.card_id) }}" class="btn-secondary">📊 По шаблону</a>
+        <a href="{{ url_for('cards.transactions', card_id=card.card_id) }}" class="btn-secondary">🧾 Транзакции</a>
+    </div>
+{% endblock %}

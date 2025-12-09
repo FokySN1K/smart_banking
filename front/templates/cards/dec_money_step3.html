@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Списать средства — Шаг 3{% endblock %}
+
+{% block content %}
+    <h1>📤 Списать средства</h1>
+    <p class="context-hint">
+        Карта: <strong>{{ card[2] }}</strong> → Категория: <strong>{{ category.category_name }}</strong><br>
+        Доступно: <strong>{{ balance }} ₽</strong>
+    </p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Сумма для списания (₽)</label>
+            <input type="number" name="money_amount" min="1" max="{{ balance }}" required>
+        </div>
+        <button type="submit">Списать</button>
+        <a href="{{ url_for('cards.dec_money_step2', card_id=card.card_id) }}" class="cancel-link">← Назад</a>
+    </form>
+{% endblock %}

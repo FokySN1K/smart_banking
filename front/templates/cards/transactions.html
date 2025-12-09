@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Транзакции — {{ card.card_name }}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>🧾 Транзакции: {{ card.card_name }}</h1>
+        <a href="{{ url_for('cards.list_cards') }}"><button>← Назад к картам</button></a>
+    </div>
+
+    {% if transactions %}
+        <div class="card-list compact">
+            {% for tx in transactions %}
+                <!-- tx: (timestamp, from_card, from_cat, to_card, to_cat, amount, description) -->
+                <div class="card-item">
+                    <div class="item-desc" style="font-size: 0.9rem; color: var(--text-secondary);">
+                        {{ tx[0].strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                    <div class="item-title">
+                        {% if tx[1] and tx[2] %}
+                            Из: «{{ tx[1] }}» / «{{ tx[2] }}»
+                        {% else %}
+                            Внешнее зачисление
+                        {% endif %}
+                        → 
+                        {% if tx[3] and tx[4] %}
+                            В: «{{ tx[3] }}» / «{{ tx[4] }}»
+                        {% else %}
+                            Внешнее списание
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>{{ tx[5] }} ₽</strong> — {{ tx[6] or '—' }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">Нет транзакций.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Пополнение{% endblock %}
+
+{% block content %}
+    <h1>📥 Пополнить карту</h1>
+    <p class="context-hint">Карта: <strong>{{ card.card_name }}</strong> → Категория: <strong>{{ category.category_name }}</strong></p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Сумма (₽)</label>
+            <input type="number" name="money_amount" min="1" step="1" required>
+        </div>
+        <button type="submit">Пополнить</button>
+        <a href="{{ url_for('cards.manage', card_id=card.card_id) }}" class="cancel-link">Отмена</a>
+    </form>
+{% endblock %}

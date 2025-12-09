@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Категории{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>📁 Ваши категории</h1>
+        <a href="{{ url_for('categories.add') }}"><button>➕ Новая категория</button></a>
+    </div>
+
+    {% if active %}
+        <div class="category-list">
+            {% for cat in active %}
+                <div class="category-item">
+                    <div class="item-title">{{ cat[2] }}</div>
+                    <div class="item-desc">{{ cat[5] or '—' }}</div>
+                    <div class="actions">
+                        <a href="{{ url_for('categories.edit', category_id=cat[0]) }}" class="btn-secondary">✏️ Редактировать</a>
+                        <a href="{{ url_for('cards.collect_to_card') }}?category_id={{ cat[0] }}" class="btn-secondary">📥 Собрать на карту</a>
+                        <a href="{{ url_for('categories.transfer_category', category_id=cat[0]) }}" class="btn-secondary">🔄 Перевести</a>
+                        <form method="POST" action="{{ url_for('categories.delete', category_id=cat[0]) }}" style="display:inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить категорию? Все средства будут списаны.')">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">Нет активных категорий. <a href="{{ url_for('categories.add') }}">Создайте первую →</a></p>
+    {% endif %}
+
+    {% if inactive %}
+
+
+    <div class="toggle-inactive">
+<input type="checkbox" id="toggleList" class="toggle-inactive">
+<label for="toggleList" >Показать список неактивных категорий</label>
+    </div>
+
+<ul id="myList" style="display: none;">
+
+        <h2>Неактивные категории</h2>
+        <div class="category-list">
+            {% for cat in inactive %}
+                <div class="category-item inactive">
+                    <div class="item-title">{{ cat[2] }} <span class="status-tag">неакт.</span></div>
+                    <form method="POST" action="{{ url_for('categories.reactivate', category_id=cat[0]) }}" style="display:inline;">
+                        <button type="submit">🔄 Восстановить</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+
+    </ul>
+    {% endif %}
+
+
+
+    <script>
+        document.getElementById('toggleList').addEventListener('change', function() {
+            const list = document.getElementById('myList');
+            if (this.value = 'new') {
+                list.style.display = 'block';
+            } else {
+                list.style.display = 'none';
+            }
+        });
+        </script>
+
+{% endblock %}

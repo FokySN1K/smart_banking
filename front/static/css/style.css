@@ -1,0 +1,461 @@
+/* ———————————————————— Переменные ———————————————————— */
+:root {
+    /* Фоны */
+    --bg-primary: #0D0D0D;
+    --bg-secondary: #1E1E1E;
+    --bg-tertiary: #2D2D2D;
+
+    /* Акценты */
+    --accent-blue: #4A90E2;
+    --accent-green: #2ECC71;
+    --accent-gold: #D4AF37;
+    --accent-copper: #B87333;
+
+    /* Текст */
+    --text-primary: #E0E0E0;
+    --text-secondary: #B0B0B0;
+    --text-accent: #F5F5F5;
+
+    /* UI */
+    --border: #333;
+    --shadow: rgba(74, 144, 226, 0.2);
+    --glow: 0 0 8px rgba(74, 144, 226, 0.4);
+    --radius: 10px;
+    --transition: all 0.3s ease;
+}
+
+/* ———————————————————— Сброс и типографика ———————————————————— */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.7;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Poppins', 'Montserrat', sans-serif;
+    font-weight: 600;
+    color: var(--text-accent);
+    margin-bottom: 1rem;
+}
+
+h1 { font-size: 2.2rem; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.3rem; }
+
+p, label, input, select, button {
+    font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+/* ———————————————————— Контейнер ———————————————————— */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* ———————————————————— Навигация (Glassmorphism) ———————————————————— */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.navbar-brand a {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--accent-blue);
+    letter-spacing: -0.5px;
+}
+
+.navbar-menu {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.navbar-menu a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.navbar-menu a:hover {
+    color: var(--text-accent);
+    background: rgba(74, 144, 226, 0.1);
+    box-shadow: var(--glow);
+}
+
+/* ———————————————————— Flash-сообщения ———————————————————— */
+.flash-messages {
+    margin-bottom: 24px;
+}
+
+.flash {
+    padding: 14px 20px;
+    margin-bottom: 12px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    backdrop-filter: blur(4px);
+    background: rgba(50, 50, 50, 0.6);
+}
+
+.flash-success { background: rgba(46, 204, 113, 0.2); border-left: 4px solid var(--accent-green); }
+.flash-error, .flash-danger { background: rgba(231, 76, 60, 0.2); border-left: 4px solid #E74C3C; }
+.flash-warning { background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--accent-gold); }
+.flash-info { background: rgba(74, 144, 226, 0.2); border-left: 4px solid var(--accent-blue); }
+
+/* ———————————————————— Формы ———————————————————— */
+form {
+    background: var(--bg-tertiary);
+    padding: 28px;
+    border-radius: var(--radius);
+    /*margin-top: 20px;*/
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-accent);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+button {
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+button:hover {
+    background: #3a7bc8;
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+}
+
+.back {
+    background-color: #8dbe53;
+}
+
+.back:hover {
+    background-color: #f7a461; /* возвращаем к яркому акценту при наведении */
+    box-shadow: var(--glow);
+    transform: translateY(-1px);
+}
+
+.toggle-inactive {
+    margin: 24px 0;
+    padding: 12px;
+    background: rgba(74, 144, 226, 0.08);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.toggle-inactive label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+
+/* ———————————————————— Единый стиль для кнопок действий ———————————————————— */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: center; /* 🔑 ключевое: выравнивание по центру */
+}
+
+/* Все кнопки в actions — одинаковой высоты и стиля */
+.actions .btn-secondary,
+.actions .btn-danger,
+.actions .btn-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px; /* фиксированная высота */
+    padding: 0 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none; /* для <a> */
+    color: white;
+}
+
+.actions .btn-back {
+    background-color: #8dbe53; /* на 20% темнее основного --accent-blue */
+}
+
+.actions .btn-back:hover {
+    background-color: #f7a461; /* возвращаем к яркому акценту при наведении */
+    box-shadow: var(--glow);
+    transform: translateY(-1px);
+}
+
+/* Основные действия — приглушённый электрический синий */
+.actions .btn-secondary {
+    background-color: #c46d26; /* на 20% темнее основного --accent-blue */
+}
+
+.actions .btn-secondary:hover {
+    background-color: #4A90E2; /* возвращаем к яркому акценту при наведении */
+    box-shadow: var(--glow);
+    transform: translateY(-1px);
+}
+
+/* Опасные действия — золото */
+.actions .btn-danger {
+    background-color: var(--accent-gold);
+    color: #0D0D0D;
+}
+
+.actions .btn-danger:hover {
+    background-color: #e6c045;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    transform: translateY(-1px);
+}
+
+/* ———————————————————— Карточки / Списки ———————————————————— */
+.card-list, .category-list {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.card-item, .category-item {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-item:last-child, .category-item:last-child {
+    border-bottom: none;
+}
+
+.item-title {
+    font-size: 1.3rem;
+    color: var(--text-accent);
+    margin-bottom: 6px;
+}
+
+.item-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+/* ———————————————————— Footer ———————————————————— */
+.footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+}
+
+/* ———————————————————— Адаптивность ———————————————————— */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .container {
+        padding: 16px;
+    }
+
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+
+    button, .actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+}
+
+/* ———————————————————— Шрифты ———————————————————— */
+
+/* ———————————————————— Hero / Empty States ———————————————————— */
+.hero {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.hero h1 {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero-desc {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 24px;
+    line-height: 1.8;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ———————————————————— Page Header ———————————————————— */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.actions-inline {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ———————————————————— Empty & Context ———————————————————— */
+.empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px 0;
+    font-style: italic;
+}
+
+.context-hint {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 1.05rem;
+}
+
+/* ———————————————————— Form Enhancements ———————————————————— */
+.hint {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-left: 6px;
+}
+
+.form-footer {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.form-footer a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+.cancel-link {
+    display: inline-block;
+    margin-top: 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+/* ———————————————————— Status Tags ———————————————————— */
+.status-tag {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--accent-gold);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+/* ———————————————————— Compact Lists ———————————————————— */
+.compact .category-item {
+    padding: 12px 16px;
+}

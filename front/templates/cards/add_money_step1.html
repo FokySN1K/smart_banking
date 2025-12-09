@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Пополнить средства — Шаг 1{% endblock %}
+
+{% block content %}
+    <h1>📥 Пополнить средства</h1>
+    <p class="context-hint">Выберите карту, на которую хотите зачислить деньги.</p>
+
+    <div class="card-list">
+        {% for card in cards %}
+            <div class="card-item">
+                <div class="item-title">{{ card[2] }}</div>
+                <div class="item-desc">{{ card[5] or '—' }}</div>
+                <a href="{{ url_for('cards.add_money_step2', card_id=card.card_id) }}" class="btn-secondary">Выбрать</a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('cards.list_cards') }}" class="cancel-link">← Отмена</a>
+{% endblock %}

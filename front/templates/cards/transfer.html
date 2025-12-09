@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Перевод между субкартами{% endblock %}
+
+{% block content %}
+    <h1>🔄 Перевод средств</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label>Исходная карта</label>
+            <select name="card_from" id="card-select-from" required>
+                <option value="">-- Выберите карту откуда --</option>
+                {% for c in cards %}
+                    <option value="{{ c.card_id }}">{{ c.card_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Исходная категория</label>
+                <select name="category_from" id="category-select-from" disabled>
+                    <option value="">-- Сначала выберите карту --</option>
+                </select>
+        </div>
+
+        <div class="form-group">
+            <label>Целевая карта</label>
+            <select name="card_to" id="card-select-to" required>
+                <option value="">-- Выберите карту куда--</option>
+                {% for c in cards %}
+                    <option value="{{ c.card_id }}">{{ c.card_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Целевая категория</label>
+                <select name="category_to" id="category-select-to" disabled>
+                    <option value="">-- Сначала выберите карту --</option>
+                </select>
+        </div>
+
+        <div class="form-group">
+            <label>Сумма (руб.)</label>
+            <input type="number" name="money_amount" min="1" required>
+        </div>
+
+        <button type="submit">Перевести</button>
+        <a href="{{ url_for('cards.list_cards') }}" class="back">Отмена</a>
+    </form>
+
+
+
+    <script>
+        // Передаём словарь из Flask в JavaScript
+        const cardToCategories = {{ card_to_categories | tojson }};
+        const allCategories = {{ all_categories | tojson }};
+        
+        document.getElementById('card-select-from').addEventListener('change', function () {
+            const cardId = this.value;
+            const categorySelect = document.getElementById('category-select-from');
+        
+            if (!cardId) {
+                categorySelect.innerHTML = '<option value="">-- Сначала выберите карту --</option>';
+                categorySelect.disabled = true;
+                return;
+            }
+            
+    
+            const categories = cardToCategories[cardId] || [];
+    
+            if (categories.length === 0) {
+                categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';
+                categorySelect.disabled = false;
+                return;
+            }
+        
+            let options = '<option value="">-- Выберите категорию --</option>';
+            categories.forEach(cat => {
+                options += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+            });
+        
+            categorySelect.innerHTML = options;
+            categorySelect.disabled = false;
+        });
+    
+    
+        document.getElementById('card-select-to').addEventListener('change', function () {
+            const cardId = this.value;
+            const categorySelect = document.getElementById('category-select-to');
+        
+            if (!cardId) {
+                categorySelect.innerHTML = '<option value="">-- Сначала выберите карту --</option>';
+                categorySelect.disabled = true;
+                return;
+            }
+            
+            const categories = allCategories['all'] || [];
+    
+            if (categories.length === 0) {
+                categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';
+                categorySelect.disabled = false;
+                return;
+            }
+        
+            let options = '<option value="">-- Выберите категорию --</option>';
+            categories.forEach(cat => {
+                options += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+            });
+        
+            categorySelect.innerHTML = options;
+            categorySelect.disabled = false;
+        });
+        </script>
+    
+    
+
+{% endblock %}
+

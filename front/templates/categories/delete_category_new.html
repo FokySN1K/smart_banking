@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Закрыть категорию + создать новую{% endblock %}
+
+{% block content %}
+    <h1>⚠️ Закрыть категорию «{{ category.category_name }}»</h1>
+    <p class="context-hint">Все средства будут переведены в новую категорию.</p>
+    <form method="POST">
+        <div class="form-group">
+            <label>Название новой категории</label>
+            <input type="text" name="new_category_name" required>
+        </div>
+        <div class="form-group">
+            <label>Описание (опционально)</label>
+            <input type="text" name="new_category_description">
+        </div>
+        <button type="submit" class="btn-danger">Закрыть и создать</button>
+        <a href="{{ url_for('categories.list_categories') }}" class="cancel-link">Отмена</a>
+    </form>
+{% endblock %}

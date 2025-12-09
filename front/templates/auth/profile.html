@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>👤 Профиль</h1>
+        <a href="{{ url_for('index') }}"><button>← Назад</button></a>
+    </div>
+
+    <div class="card-list" style="margin-bottom: 24px;">
+        <div class="card-item">
+            <div class="item-title">Логин</div>
+            <div class="item-desc">{{ current_user.login }}</div>
+        </div>
+        <div class="card-item">
+            <div class="item-title">Имя</div>
+            <div class="item-desc">{{ current_user.name }}</div>
+        </div>
+    </div>
+
+    <h2>Редактировать профиль</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label>Имя</label>
+            <input type="text" name="name" value="{{ current_user.name }}" maxlength="50" required>
+        </div>
+
+        <div class="form-group">
+            <label>Новый пароль <span class="hint">(оставьте пустым, чтобы не менять)</span></label>
+            <input type="password" name="new_password" minlength="6">
+        </div>
+
+        <div class="form-group">
+            <label>Подтверждение пароля</label>
+            <input type="password" name="confirm_password" minlength="6">
+        </div>
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+{% endblock %}

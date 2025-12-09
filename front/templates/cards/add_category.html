@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Привязать категорию{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>➕ Привязать категорию к карте</h1>
+        <a href="{{ url_for('cards.manage', card_id=card.card_id) }}"><button>← Назад к карте</button></a>
+    </div>
+
+    <p class="context-hint">Карта: <strong>{{ card.card_name }}</strong></p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Выберите категорию</label>
+            <select name="category_id" required>
+                <option value="">— Выберите —</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Привязать</button>
+    </form>
+{% endblock %}

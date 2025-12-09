@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Денежные шаблоны{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>📊 Денежные шаблоны</h1>
+        <a href="{{ url_for('money_templates.add') }}"><button>➕ Новый шаблон</button></a>
+    </div>
+
+    {% if templates %}
+        <div class="card-list">
+            {% for t in templates %}
+                <div class="card-item">
+                    <div class="item-title">{{ t.description or 'Шаблон #' + t.template_id|string }}</div>
+                    <div class="item-desc">
+                        Распределение:
+                        {% for cat_id, pct in t.percents.items() %}
+                            {% set cat = category_by_id(cat_id) %}
+                            {{ cat.category_name if cat else '⚠️ Удалённая категория' }}: {{ pct }}%,
+                        {% endfor %}
+                    </div>
+                    <div class="actions">
+                        <a href="{{ url_for('money_templates.edit', template_id=t.template_id) }}" class="btn-secondary">✏️ Редактировать</a>
+                        <form method="POST" action="{{ url_for('money_templates.delete', template_id=t.template_id) }}" style="display:inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить шаблон?')">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">Нет денежных шаблонов. <a href="{{ url_for('money_templates.add') }}">Создать первый →</a></p>
+    {% endif %}
+{% endblock %}

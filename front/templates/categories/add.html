@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить категорию{% endblock %}
+
+{% block content %}
+    <h1>➕ Новая категория</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label>Название</label>
+            <input type="text" name="category_name" required>
+        </div>
+        <div class="form-group">
+            <label>Описание</label>
+            <input type="text" name="description">
+        </div>
+        <button type="submit">Создать</button>
+        <a href="{{ url_for('categories.list_categories') }}">← Назад</a>
+    </form>
+{% endblock %}

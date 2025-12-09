@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Карты{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>💳 Ваши карты</h1>
+        <div class="actions-inline">
+            <a href="{{ url_for('cards.add') }}"><button>➕ Карта</button></a>
+            <a href="{{ url_for('cards.add_money_step1') }}"><button>📥 Пополнить</button></a>
+            <a href="{{ url_for('cards.transfer') }}"><button>🔄 Перевод</button></a>
+        </div>
+    </div>
+
+    {% if cards %}
+        <div class="card-list">
+            {% for card in cards %}
+                <div class="card-item">
+                    <div class="item-title">{{ card.card_name }}</div>
+                    <div class="item-desc">{{ card.description or '—' }}</div>
+                    <div class="actions">
+                        <a href="{{ url_for('cards.manage', card_id=card.card_id) }}" class="btn-secondary">👀 Управление</a>
+                        <a href="{{ url_for('cards.add_category_to_card', card_id=card.card_id) }}" class="btn-secondary">➕ Категория</a>
+                        <form method="POST" action="{{ url_for('cards.delete', card_id=card.card_id) }}" style="display:inline;">
+                            <button type="submit" class="btn-danger" onclick="return confirm('Удалить карту? Все средства будут списаны.')">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">У вас нет карт. <a href="{{ url_for('cards.add') }}">Добавьте первую →</a></p>
+    {% endif %}
+{% endblock %}

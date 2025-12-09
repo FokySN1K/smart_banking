@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Перевод в существующую категорию{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>🔄 Перевести средства из «{{ category[2] }}»</h1>
+        <a href="{{ url_for('categories.list_categories') }}"><button>← Назад</button></a>
+    </div>
+    <p class="context-hint">Старая категория останется активной, но с нулевым балансом.</p>
+
+    {% if categories %}
+        <form method="POST">
+            <div class="form-group">
+                <label>Целевая категория</label>
+                <select name="target_category_id" required>
+                    <option value="">— Выберите —</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat[0] }}">{{ cat[2] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Перевести средства</button>
+        </form>
+    {% else %}
+        <p class="empty-state">Нет других активных категорий для перевода.</p>
+    {% endif %}
+{% endblock %}

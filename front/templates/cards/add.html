@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить карту{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>➕ Новая карта</h1>
+        <a href="{{ url_for('cards.list_cards') }}"><button>← Назад к картам</button></a>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="card_name">Название карты <span class="hint">(обязательно)</span></label>
+            <input type="text" id="card_name" name="card_name" maxlength="100" required placeholder="Например: «Основная», «Отпуск»">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Описание <span class="hint">(опционально)</span></label>
+            <input type="text" id="description" name="description" maxlength="255" placeholder="Например: «Карта для ежемесячных трат»">
+        </div>
+
+        <button type="submit">Создать карту</button>
+    </form>
+{% endblock %}

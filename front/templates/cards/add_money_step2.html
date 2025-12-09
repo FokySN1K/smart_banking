@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Пополнить средства — Шаг 2{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>📥 Пополнение: {{ card[2] }}</h1>
+        <a href="{{ url_for('cards.add_money_step1') }}"><button>← Назад</button></a>
+    </div>
+
+    {% if categories %}
+        <p class="context-hint">Выберите категорию для зачисления:</p>
+        <div class="category-list compact">
+            {% for cat in categories %}
+                <div class="category-item">
+                    <div class="item-title">{{ cat.category_name }}</div>
+                    <div class="item-desc">Текущий баланс: <strong>{{ cat.amount }} ₽</strong></div>
+                    <a href="{{ url_for('cards.add_money_step3', card_id=card.card_id, category_id=cat.category_id) }}" class="btn-secondary">Пополнить</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">Нет привязанных категорий. Сначала <a href="{{ url_for('cards.add_category_to_card', card_id=card.card_id) }}">привяжите категорию →</a></p>
+    {% endif %}
+
+    <a href="{{ url_for('cards.list_cards') }}" class="cancel-link">← Отмена</a>
+{% endblock %}

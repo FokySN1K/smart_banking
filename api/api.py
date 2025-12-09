@@ -87,18 +87,32 @@ def get_user_by_login(login):
         WHERE login = %(login)s;
     """, params = {'login': login})
 
-@try_return_bool
-def change_user_by_id(**kwargs):
+#@try_return_bool
+def change_user_by_id(user_id, name=None, password=None):
     """
-    Меняет пароль и/или имя пользователя.
-    Аргументы: id, password, name (именованные).
+    Обновляет имя и/или пароль пользователя.
+    Аргументы:
+        user_id — обязательно,
+        name — опционально,
+        password — опционально.
     Возвращает True при успехе, иначе False.
     """
-    DB.execute("""
-        UPDATE "user"
-        SET password = %(password)s, name = %(name)s
-        WHERE id = %(id)s;
-    """, params = kwargs)
+    set_parts = []
+    params = {'id': user_id}
+
+    if name is not None:
+        set_parts.append("name = %(name)s")
+        params['name'] = name
+    if password is not None:
+        set_parts.append("password = %(password)s")
+        params['password'] = password
+
+    if not set_parts:
+        return True  # ничего не менялось — успех
+
+    query = f"UPDATE \"user\" SET {', '.join(set_parts)} WHERE id = %(id)s;"
+    DB.execute(query, params=params)
+    return True
 
 #################################
 # API для работы с картами в БД #
