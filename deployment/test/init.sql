@@ -32,9 +32,9 @@ grant connect on database smart_banking to dml_role, read_only_role;
 grant usage on schema smart_banking to dml_role, read_only_role;
 
 -- Предоставление привилегий по умолчанию для будущих таблиц
-alter default privileges in schema smart_banking grant select, insert, update, delete on tables to dml_role;
-alter default privileges in schema smart_banking grant select on tables to read_only_role;
+alter default privileges for role smart_banking in schema smart_banking grant select, insert, update, delete on tables to dml_role;
+alter default privileges for role smart_banking in schema smart_banking grant select on tables to read_only_role;
 
 -- Предоставление привилегий на последовательности (для автоинкрементных полей)
-alter default privileges in schema smart_banking grant usage, select on sequences to dml_role;
-alter default privileges in schema smart_banking grant select on sequences to read_only_role;
+alter default privileges for role smart_banking in schema smart_banking grant usage, select on sequences to dml_role;
+alter default privileges for role smart_banking in schema smart_banking grant select on sequences to read_only_role;
