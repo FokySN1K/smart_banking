@@ -7,7 +7,7 @@ if __name__ != "__main__":
     from .db import Database
 
     Database.configure(
-        dsn = "postgresql://smart_banking:smart_banking@localhost:5433/smart_banking",
+        dsn = "postgresql://python_smart_banking_dml:python_smart_banking_dml@localhost:5433/smart_banking",
         minconn = 1,
         maxconn = 10,
     )
