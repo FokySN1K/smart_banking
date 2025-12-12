@@ -2,22 +2,22 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:18
-    container_name: postgres-smart-banking-prod
-    env_file: .env
+    build:
+      context: ../test
+      dockerfile: Dockerfile
+    container_name: postgres-smart-banking
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-smart_banking}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      SMART_BANKING_DB_USER: ${SMART_BANKING_DB_USER}
+      SMART_BANKING_DB_PASSWORD: ${SMART_BANKING_DB_PASSWORD}
+      PYTHON_DML_USER: ${PYTHON_DML_USER}
+      PYTHON_DML_PASSWORD: ${PYTHON_DML_PASSWORD}
+      PYTHON_RO_USER: ${PYTHON_RO_USER}
+      PYTHON_RO_PASSWORD: ${PYTHON_RO_PASSWORD}
+    env_file:
+      - .env
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
-    volumes:
-      - ../data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      - "${DB_PORT:-5432}:5432"
     restart: unless-stopped
