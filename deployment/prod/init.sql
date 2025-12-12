@@ -15,9 +15,6 @@ create role read_only_role;
 create user python_smart_banking_dml with password 'python_smart_banking_dml';
 create user python_smart_banking_ro with password 'python_smart_banking_ro';
 
-alter role python_smart_banking_dml set search_path = smart_banking;
-alter role python_smart_banking_ro set search_path = smart_banking;
-
 -- Назначение ролей пользователям
 grant dml_role to python_smart_banking_dml;
 grant read_only_role to python_smart_banking_ro;
