@@ -11,6 +11,7 @@ from api import (
     add_subcard,
     get_subcard_by_card_id_and_category_id,
     get_active_categories_by_owner_id,
+    get_inactive_categories_by_owner_id,
     inc_money_to_subcard,
     dec_money_from_subcard,
     transfer_money_between_subcards,
@@ -22,10 +23,20 @@ from api import (
     get_templates_by_owner_id,
     get_all_subcards_by_user_id
 )
-from utils import validate_percents
+
+
+from utils import (
+    validate_percents,
+    card_turple_to_dict,
+    card_turples_to_dicts,
+    category_turple_to_dict,
+    categories_turples_to_dicts
+    )
 import json
 
 cards_bp = Blueprint('cards', __name__, url_prefix='/cards')
+
+
 
 # Вспомогательная функция: проверка принадлежности карты
 def ensure_card_ownership(card_id):
@@ -33,14 +44,8 @@ def ensure_card_ownership(card_id):
     if not card or card[1] != current_user.id:
         return None
     # card: (id, owner_id, name, amount, is_active, description)
-    return {
-        'card_id': card[0],
-        'owner_id': card[1],
-        'card_name': card[2],
-        'amount': card[3],
-        'is_active': card[4],
-        'description': card[5],
-    }
+    return card_turple_to_dict(card)
+
 
 # Вспомогательная функция: получение категории по ID с проверкой владельца
 def safe_category_by_id(category_id):
@@ -188,7 +193,8 @@ def add_category_to_card(card_id):
 @cards_bp.route('/add_money')
 @login_required
 def add_money_step1():
-    cards = get_active_cards_by_owner_id(current_user.id) or []
+    cards = card_turples_to_dicts(get_active_cards_by_owner_id(current_user.id) or [])
+    print("step1:", cards)
     return render_template('cards/add_money_step1.html', cards=cards)
 
 @cards_bp.route('/add_money/<int:card_id>')
@@ -359,16 +365,16 @@ def transfer():
     cards = [{'card_id': c[0], 'card_name': c[2]} for c in cards_raw]
     categories_raw = get_active_categories_by_owner_id(current_user.id) or []
     categories = [{'category_id': c[0], 'category_name': c[2]} for c in categories_raw]
-
-
     
-
-    subcards_raw = get_all_subcards_by_user_id(current_user.id)
-    subcards = [{'card_id': s[1], 'category_id': s[2]} for s in subcards_raw]
+    subcards_raw = get_all_subcards_by_user_id(current_user.id) or []
+    subcards = [{'card_id': s[1], 'category_id': s[2]} for s in subcards_raw if s[3]]
     
     category_by_id = {}
     for c in categories:
         category_by_id[c['category_id']] = c
+    
+    
+    print(category_by_id, subcards)
 
     card_to_categories =  {c['card_id']: [category_by_id[s['category_id']] for s in subcards if s['card_id'] == c['card_id']] for c in cards} 
 
@@ -397,7 +403,12 @@ def add_by_template(card_id):
             'description': t[3],
             'percents': t[2]
         })
-    print(templates, templates_raw)
+    
+    categories = categories_turples_to_dicts(get_active_categories_by_owner_id(current_user.id) or [])
+    inactive_categories = categories_turples_to_dicts(get_inactive_categories_by_owner_id(current_user.id) or [])
+    id_to_category = dict()
+    for cat in categories+inactive_categories:
+        id_to_category[cat['category_id']] = cat['category_name']
 
     if request.method == 'POST':
         try:
@@ -443,7 +454,7 @@ def add_by_template(card_id):
 
         return redirect(url_for('cards.manage', card_id=card_id))
 
-    return render_template('cards/add_by_template.html', card=card, templates=templates)
+    return render_template('cards/add_by_template.html', card=card, templates=templates, id_to_category=id_to_category)
 
 # —————————————————————————————————————
 # Сбор денег категории на одну карту
@@ -577,6 +588,7 @@ def transactions(card_id):
     if not card:
         flash("Карта недоступна")
         return redirect(url_for('cards.list_cards'))
+    
     from api import get_last_n_transactions_by_card_id
     txs = get_last_n_transactions_by_card_id(card_id, 20) or []
     return render_template('cards/transactions.html', card=card, transactions=txs)

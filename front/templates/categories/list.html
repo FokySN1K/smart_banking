@@ -12,13 +12,14 @@
         <div class="category-list">
             {% for cat in active %}
                 <div class="category-item">
-                    <div class="item-title">{{ cat[2] }}</div>
-                    <div class="item-desc">{{ cat[5] or '—' }}</div>
+                    <div class="item-title">{{ cat.category_name }}</div>
+                    <div class="item-desc">{{ cat.description or '—' }}</div>
+                    <div class="item-desc">Баланс: {{ cat.amount }} ₽</div>
                     <div class="actions">
-                        <a href="{{ url_for('categories.edit', category_id=cat[0]) }}" class="btn-secondary">✏️ Редактировать</a>
-                        <a href="{{ url_for('cards.collect_to_card') }}?category_id={{ cat[0] }}" class="btn-secondary">📥 Собрать на карту</a>
-                        <a href="{{ url_for('categories.transfer_category', category_id=cat[0]) }}" class="btn-secondary">🔄 Перевести</a>
-                        <form method="POST" action="{{ url_for('categories.delete', category_id=cat[0]) }}" style="display:inline;">
+                        <a href="{{ url_for('categories.edit', category_id=cat.category_id) }}" class="btn-secondary">✏️ Редактировать</a>
+                        <a href="{{ url_for('cards.collect_to_card') }}?category_id={{ cat.category_id }}" class="btn-secondary">📥 Собрать на карту</a>
+                        <a href="{{ url_for('categories.transfer_category', category_id=cat.category_id) }}" class="btn-secondary">🔄 Перевести</a>
+                        <form method="POST" action="{{ url_for('categories.delete', category_id=cat.category_id) }}" style="display:inline;">
                             <button type="submit" class="btn-danger" onclick="return confirm('Удалить категорию? Все средства будут списаны.')">🗑️ Удалить</button>
                         </form>
                     </div>
@@ -44,7 +45,7 @@
             {% for cat in inactive %}
                 <div class="category-item inactive">
                     <div class="item-title">{{ cat[2] }} <span class="status-tag">неакт.</span></div>
-                    <form method="POST" action="{{ url_for('categories.reactivate', category_id=cat[0]) }}" style="display:inline;">
+                    <form method="POST" action="{{ url_for('categories.reactivate', category_id=cat.category_id) }}" style="display:inline;">
                         <button type="submit">🔄 Восстановить</button>
                     </form>
                 </div>
@@ -59,7 +60,7 @@
     <script>
         document.getElementById('toggleList').addEventListener('change', function() {
             const list = document.getElementById('myList');
-            if (this.value = 'new') {
+            if (this.checked) {
                 list.style.display = 'block';
             } else {
                 list.style.display = 'none';
