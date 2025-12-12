@@ -14,30 +14,33 @@ from api import (
     transfer_money_to_new_category,
     delete_category_and_transfer_money_to_new
 )
+
+from utils import (
+    category_turple_to_dict,
+    categories_turples_to_dicts
+)
+
 from models.user import User
 
+
+
 categories_bp = Blueprint('categories', __name__, url_prefix='/categories')
+
+
 
 def safe_category_by_id(category_id):
     """Возвращает категорию, если она существует и принадлежит текущему пользователю."""
     cat = get_category_by_id(category_id)
     if not cat or cat[1] != current_user.id:  # cat[1] = owner_id
         return None
-    return {
-        'category_id': cat[0],
-        'owner_id': cat[1],
-        'category_name': cat[2],
-        'amount': cat[3],
-        'is_active': cat[4],
-        'description': cat[5],
-    }
+    return category_turple_to_dict(cat)
 
 
 @categories_bp.route('/')
 @login_required
 def list_categories():
-    active = get_active_categories_by_owner_id(current_user.id) or []
-    inactive = get_inactive_categories_by_owner_id(current_user.id) or []
+    active = categories_turples_to_dicts(get_active_categories_by_owner_id(current_user.id) or [])
+    inactive = categories_turples_to_dicts(get_inactive_categories_by_owner_id(current_user.id) or [])
     return render_template('categories/list.html', active=active, inactive=inactive)
 
 @categories_bp.route('/add', methods=['GET', 'POST'])

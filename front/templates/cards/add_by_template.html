@@ -12,68 +12,121 @@
 
     {% if templates %}
         <form method="POST">
+            <!-- Выбор шаблона -->
             <div class="form-group">
                 <label>Выберите шаблон</label>
-                <select name="template_id" required>
+                <select name="template_id" id="template_id" required>
                     <option value="">— Выберите шаблон —</option>
                     {% for t in templates %}
-                        <option value="{{ t.template_id }}">
+                        <option value="{{ t.template_id }}" data-percents='{{ t.percents | tojson }}'>
                             {% if t.description %}{{ t.description }}{% else %}Шаблон #{{ t.template_id }}{% endif %}
+                            {% for cat_id_str, pct in t.percents.items() %}
+                                {% set cat_id = cat_id_str | int %}
+                                {{ id_to_category[cat_id] }}: {{ pct }}%
+                            {% endfor %}
                         </option>
                     {% endfor %}
                 </select>
-            </div>
+            </div> <!-- ✅ Закрываем .form-group -->
 
+            <!-- Ввод суммы -->
             <div class="form-group">
                 <label>Общая сумма зачисления (₽)</label>
-                <input type="number" name="total_amount" min="1" required placeholder="Например: 10000">
+                <input type="number" name="total_amount" id="total_amount" min="1" required placeholder="Например: 10000">
+            </div> <!-- ✅ Оборачиваем в .form-group для стиля и порядка -->
+
+            <!-- Скрытые данные -->
+            <div id="id_to_category" style="display:none;">{{ id_to_category | tojson | safe }}</div>
+
+            <!-- Распределение -->
+            <div id="distribution-container" style="display:none; margin-top: 20px;">
+                <h3>Предпросмотр распределения</h3>
+                <div id="distribution-list"></div>
             </div>
 
-            <button type="submit">Зачислить по шаблону</button>
+            <button type="button" id="preview-btn">Показать распределение</button>
+            <button type="submit" id="submit-btn" style="display:none; margin-left: 10px;">Подтвердить и пополнить</button>
         </form>
     {% else %}
         <p class="empty-state">У вас нет шаблонов распределения. <a href="{{ url_for('money_templates.add') }}">Создать →</a></p>
     {% endif %}
 
-
-
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        
+        console.log('DOM загружен');
+        
+        const previewBtn = document.getElementById('preview-btn');
+        console.log('Кнопка найдена:', previewBtn);
+
+
         const selectTemplate = document.getElementById('template_id');
         const inputAmount = document.getElementById('total_amount');
-        const previewBtn = document.getElementById('preview-btn');
+        
         const submitBtn = document.getElementById('submit-btn');
         const distContainer = document.getElementById('distribution-container');
         const distList = document.getElementById('distribution-list');
     
-        previewBtn.addEventListener('click', async () => {  // сделаем обработчик async
-        const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
-        const amount = parseInt(inputAmount.value);
-        const percentsData = templateOption.dataset.percents ? JSON.parse(templateOption.dataset.percents) : null;
+        // Получаем данные категорий
+        const idToCategoryEl = document.getElementById('id_to_category');
+        const idToCategory = JSON.parse(idToCategoryEl.textContent);
     
-        if (!templateOption.value || !amount || !percentsData) {
-            alert('Выберите шаблон и укажите сумму');
-            return;
-        }
+        previewBtn.addEventListener('click', () => {
+            console.log('Кнопка нажата!');
+            
+            const selectTemplate = document.getElementById('template_id');
+            const templateOption = selectTemplate.options[selectTemplate.selectedIndex];
+            
+            console.log('Выбранный шаблон:', templateOption.value);
+            console.log('data-percents атрибут:', templateOption.dataset.percents);
+            
+            const amountStr = inputAmount.value.trim();
+            const percentsData = templateOption.dataset.percents
+                ? JSON.parse(templateOption.dataset.percents)
+                : null;
     
-        distList.innerHTML = '';
+            if (!templateOption.value || !amountStr || !percentsData) {
+                alert('Выберите шаблон и укажите сумму');
+                return;
+            }
     
-        for (const [category_id, percent] of Object.entries(percentsData)) {
-            const amountForCat = Math.floor(amount * percent / 100);
-            const row = document.createElement('div');
-            row.classList.add('distribution-row');
+            const amount = parseInt(amountStr, 10);
+            if (isNaN(amount) || amount <= 0) {
+                alert('Укажите корректную сумму');
+                return;
+            }
     
-            const data = await category_by_id(category_id);  // ✅ теперь await работает
-            row.innerHTML = `
-                <span>Категория ${data.category_name} (${percent}%)</span>
-                <input type="number" name="category_amount_${data.category_id}" value="${amountForCat}" min="0">
-            `;
-            distList.appendChild(row);
-        }
+            distList.innerHTML = '';
     
-        distContainer.style.display = 'block';
-        submitBtn.style.display = 'inline-block';
+            for (const [catIdStr, percent] of Object.entries(percentsData)) {
+                const catId = parseInt(catIdStr, 10);
+                const amountForCat = Math.floor(amount * percent / 100);
+                const categoryName = idToCategory[catId] || "⚠️ Удалённая категория";
+    
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.margin = '8px 0';
+    
+                const label = document.createElement('span');
+                label.textContent = `${categoryName} (${percent}%)`;
+    
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.name = `category_amount_${catId}`;
+                input.value = amountForCat;
+                input.min = '0';
+                input.style.width = '100px';
+                input.style.textAlign = 'right';
+    
+                row.appendChild(label);
+                row.appendChild(input);
+                distList.appendChild(row);
+            }
+    
+            distContainer.style.display = 'block';
+            submitBtn.style.display = 'inline-block';
+        });
     });
-    });
-</script>
+    </script>
 {% endblock %}
