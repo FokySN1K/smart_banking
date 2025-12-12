@@ -44,7 +44,7 @@
         <div class="category-list">
             {% for cat in inactive %}
                 <div class="category-item inactive">
-                    <div class="item-title">{{ cat[2] }} <span class="status-tag">неакт.</span></div>
+                    <div class="item-title">{{ cat.category_name }} <span class="status-tag">неакт.</span></div>
                     <form method="POST" action="{{ url_for('categories.reactivate', category_id=cat.category_id) }}" style="display:inline;">
                         <button type="submit">🔄 Восстановить</button>
                     </form>

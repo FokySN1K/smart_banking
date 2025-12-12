@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать денежный шаблон{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>✏️ Редактировать шаблон</h1>
+        <a href="{{ url_for('money_templates.list_templates') }}"><button>← Назад к шаблонам</button></a>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Описание шаблона</label>
+            <input type="text"
+                   name="template_description"
+                   value="{{ template.description }}"
+                   required
+                   maxlength="255"
+                   placeholder="Например: «Зарплата», «Стипендия»">
+        </div>
+
+        {% if categories %}
+            <p class="context-hint">Распределение (сумма процентов должна быть 100%):</p>
+            {% for cat in categories %}
+                {% set current_pct = template.percents.get(cat[0] | string, 0) %}
+                <div class="form-group">
+                    <label>{{ cat[2] }}</label>
+                    <input type="number"
+                           name="percent_{{ cat[0] }}"
+                           value="{{ current_pct }}"
+                           min="0"
+                           max="100"
+                           placeholder="Процент">
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">Нет категорий. Создайте хотя бы одну, чтобы использовать шаблоны.</p>
+        {% endif %}
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+{% endblock %}

@@ -7,7 +7,8 @@ from api import (
     add_template,
     change_template_by_id,
     delete_template_by_id,
-    get_active_categories_by_owner_id
+    get_active_categories_by_owner_id,
+    get_inactive_categories_by_owner_id
 )
 from utils import validate_percents
 import json
@@ -22,7 +23,7 @@ def safe_template_by_id(template_id):
     return {
         'template_id': t[0],
         'owner_id': t[1],
-        'percents': json.loads(t[2]) if t[2] else {},
+        'percents': t[2] if t[2] else {},
         'description': t[3]
     }
 
@@ -87,11 +88,13 @@ def add():
 @login_required
 def edit(template_id):
     template = safe_template_by_id(template_id)
+    print(template)
     if not template:
         flash("Шаблон не найден", "error")
         return redirect(url_for('money_templates.list_templates'))
 
     categories = get_active_categories_by_owner_id(current_user.id) or []
+    categories += get_inactive_categories_by_owner_id(current_user.id) or []
     if request.method == 'POST':
         desc = request.form.get('template_description', '').strip()
         if not desc:
