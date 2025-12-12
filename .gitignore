@@ -1,2 +1,4 @@
 optymized_front/venv/
 __pycache__
+
+/postgres_/

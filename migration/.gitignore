@@ -15,6 +15,8 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+liquibase.properties
+
 # AWS User-specific
 .idea/**/aws.xml
 
