@@ -13,7 +13,6 @@
 
     <!-- Форма фильтров -->
     <form method="GET" id="filter-form">
-        <!-- ... карта, категория ... -->
         <div class="form-group">
             <label>Карта</label>
             <select name="card_id">
@@ -74,9 +73,9 @@
                 data-from-cat="{{ tx[2] or '' }}"
                 data-to-card="{{ tx[3] or '' }}"
                 data-to-cat="{{ tx[4] or '' }}">
-                    <!-- Время отображается через JS (см. внизу) -->
+                    <!-- Время отображается через JS -->
                     <div class="item-desc transaction-time" data-utc="{{ tx[0].isoformat() }}">
-                        {{ tx[0].strftime('%d.%m.%Y %H:%M') }} <!-- fallback -->
+                        {{ tx[0].strftime('%d.%m.%Y %H:%M') }}
                     </div>
                     <div class="item-title">
                         {% if tx[1] and tx[2] %}
@@ -133,7 +132,7 @@
                         minute: '2-digit',
                         second: '2-digit',
                         hour12: false
-                    }); // Пример: "2025-12-19 15:30:45"
+                    });
         
                     // 2. Извлекаем данные из скрытых data-атрибутов (надёжнее, чем парсить текст)
                     const fromCard = item.dataset.fromCard || '';
