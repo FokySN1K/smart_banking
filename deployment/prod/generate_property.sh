@@ -17,4 +17,11 @@ username=${SMART_BANKING_DB_USER}
 password=${SMART_BANKING_DB_PASSWORD}
 EOF
 
+cat > ../../api/python.env <<EOF
+PYTHON_DML_USER=${PYTHON_DML_USER}
+PYTHON_DML_PASSWORD=${PYTHON_DML_PASSWORD}
+DB_HOST=localhost
+DB_PORT=${DB_PORT}
+EOF
+
 echo "liquibase.properties успешно создан в /migration/"
