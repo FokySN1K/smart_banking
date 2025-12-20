@@ -21,7 +21,8 @@ from api import (
     delete_category_and_transfer_money_to_existing,
     get_template_by_id,
     get_templates_by_owner_id,
-    get_all_subcards_by_user_id
+    get_all_subcards_by_user_id,
+    get_transactions
 )
 
 
@@ -581,14 +582,99 @@ def delete_category_with_transfer_existing(category_id):
     ]
     return render_template('cards/delete_category_existing.html', category=cat, categories=categories)
 
-@cards_bp.route('/<int:card_id>/transactions')
-@login_required
-def transactions(card_id):
-    card = ensure_card_ownership(card_id)
-    if not card:
-        flash("Карта недоступна")
-        return redirect(url_for('cards.list_cards'))
+@cards_bp.app_template_filter('filter_transactions')
+def filter_transactions(txs):
+    transactions = []
+    for tx in txs:
+        formatted_date = tx[0].strftime('%d.%m.%Y %H:%M')
+        
+        new_tx = (formatted_date,) + tx[1:]
+
+        transactions.append(new_tx)
     
-    from api import get_last_n_transactions_by_card_id
-    txs = get_last_n_transactions_by_card_id(card_id, 20) or []
-    return render_template('cards/transactions.html', card=card, transactions=txs)
+    return transactions
+
+
+
+from datetime import datetime
+
+from datetime import datetime, timezone, timedelta
+
+@cards_bp.route('/transactions', methods=['GET'])
+@login_required
+def transactions():
+    card_id = request.args.get('card_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    time_from_str = request.args.get('time_from')
+    time_to_str = request.args.get('time_to')
+    tz_offset = request.args.get('tz_offset', type=int)  # в минутах от UTC
+    limit = request.args.get('limit', default=50, type=int)
+    reverse = request.args.get('reverse') == '1'
+
+    if limit < 1 or limit > 1000:
+        limit = 50
+
+    # Функция: локальное время (без TZ) + смещение → UTC
+    def local_to_utc(local_dt_str, offset_minutes):
+        if not local_dt_str:
+            return None
+        try:
+            naive_dt = datetime.strptime(local_dt_str, '%Y-%m-%dT%H:%M')
+            # JS: getTimezoneOffset() = -180 для MSK (UTC+3)
+            # Значит, смещение пользователя = -offset_minutes
+            user_tz = timezone(timedelta(minutes=-offset_minutes))
+            localized = naive_dt.replace(tzinfo=user_tz)
+            return localized.astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    dt_from = local_to_utc(time_from_str, tz_offset) if tz_offset is not None else None
+    dt_to = local_to_utc(time_to_str, tz_offset) if tz_offset is not None else None
+
+    # Если не передан tz_offset — работаем как раньше (naive datetime)
+    if tz_offset is None:
+        if time_from_str:
+            try:
+                dt_from = datetime.strptime(time_from_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                flash("Некорректное время 'с'", "error")
+        if time_to_str:
+            try:
+                dt_to = datetime.strptime(time_to_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                flash("Некорректное время 'по'", "error")
+
+    transactions = []
+    if card_id is not None or category_id is not None:
+        raw = get_transactions(
+            card_id=card_id,
+            category_id=category_id,
+            time_from=dt_from,
+            time_to=dt_to,
+            limit=limit,
+            reverse=reverse
+        )
+        if raw is not None:
+            transactions = raw
+        else:
+            flash("Ошибка при загрузке транзакций", "error")
+
+    # Списки для фильтров
+    cards = get_active_cards_by_owner_id(current_user.id) or []
+    active_cats = get_active_categories_by_owner_id(current_user.id) or []
+    inactive_cats = get_inactive_categories_by_owner_id(current_user.id) or []
+    all_categories = active_cats + inactive_cats
+
+    # Для отображения в форме: оставляем исходные строки
+    return render_template(
+        'cards/transactions.html',
+        transactions=transactions,
+        cards=[{'card_id': c[0], 'card_name': c[2]} for c in cards],
+        categories=[{'category_id': c[0], 'category_name': c[2]} for c in all_categories],
+        current_card_id=card_id,
+        current_category_id=category_id,
+        current_time_from=time_from_str or '',
+        current_time_to=time_to_str or '',
+        current_limit=limit,
+        current_reverse=reverse
+    )

@@ -7,15 +7,16 @@
     </div>
 
     {% if templates %}
-        <div class="card-list">
+        <div class="card-list" value="{{templates}}">
             {% for t in templates %}
                 <div class="card-item">
                     <div class="item-title">{{ t.description or 'Шаблон #' + t.template_id|string }}</div>
                     <div class="item-desc">
-                        Распределение:
+                        Распределение: 
                         {% for cat_id, pct in t.percents.items() %}
-                            {% set cat = category_by_id(cat_id) %}
-                            {{ cat.category_name if cat else '⚠️ Удалённая категория' }}: {{ pct }}%,
+                            {% if pct %}
+                                {{ safe_category_by_id(cat_id).category_name if pct else '⚠️ Удалённая категория' }}: {{ pct }}%,
+                            {% endif %}
                         {% endfor %}
                     </div>
                     <div class="actions">

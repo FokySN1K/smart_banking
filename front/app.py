@@ -12,6 +12,8 @@ from api import api
 from money_templates.views import money_templates_bp
 from api import get_user_by_id
 
+from cards.views import filter_transactions
+
 load_dotenv()
 
 def create_app():
@@ -36,6 +38,9 @@ def create_app():
     app.register_blueprint(categories_bp)
     app.register_blueprint(cards_bp)
     app.register_blueprint(money_templates_bp)
+
+    app.jinja_env.filters['filter_transactions'] = filter_transactions
+
 
     @app.route('/')
     def index():

@@ -1,20 +1,82 @@
 {% extends "base.html" %}
 
-{% block title %}Транзакции — {{ card.card_name }}{% endblock %}
+{% block title %}Транзакции{% endblock %}
 
 {% block content %}
     <div class="page-header">
-        <h1>🧾 Транзакции: {{ card.card_name }}</h1>
+        <h1>🧾 История транзакций</h1>
+        {% if transactions %}
+            <button onclick="downloadCSV()" class="btn-secondary">📥 Экспорт в CSV</button>
+        {% endif %}
         <a href="{{ url_for('cards.list_cards') }}"><button>← Назад к картам</button></a>
     </div>
 
+    <!-- Форма фильтров -->
+    <form method="GET" id="filter-form">
+        <!-- ... карта, категория ... -->
+        <div class="form-group">
+            <label>Карта</label>
+            <select name="card_id">
+                <option value="">— Любая —</option>
+                {% for card in cards %}
+                    <option value="{{ card.card_id }}" {% if current_card_id == card.card_id %}selected{% endif %}>
+                        {{ card.card_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Категория</label>
+            <select name="category_id">
+                <option value="">— Любая —</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.category_id }}" {% if current_category_id == cat.category_id %}selected{% endif %}>
+                        {{ cat.category_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Время с (локальное)</label>
+            <input type="datetime-local" name="time_from" value="{{ current_time_from }}">
+        </div>
+
+        <div class="form-group">
+            <label>Время по (локальное)</label>
+            <input type="datetime-local" name="time_to" value="{{ current_time_to }}">
+        </div>
+
+        <!-- Скрытое поле для часового пояса -->
+        <input type="hidden" name="tz_offset" id="tz_offset">
+
+        <div class="form-group">
+            <label>Лимит записей (1–1000)</label>
+            <input type="number" name="limit" min="1" max="1000" value="{{ current_limit }}">
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="reverse" value="1" {% if current_reverse %}checked{% endif %}>
+                Сначала новые
+            </label>
+        </div>
+
+        <button type="submit">Применить фильтры</button>
+    </form>
+
+    <!-- Транзакции -->
     {% if transactions %}
-        <div class="card-list compact">
+        <div class="card-list compact" style="margin-top: 24px;">
             {% for tx in transactions %}
-                <!-- tx: (timestamp, from_card, from_cat, to_card, to_cat, amount, description) -->
-                <div class="card-item">
-                    <div class="item-desc" style="font-size: 0.9rem; color: var(--text-secondary);">
-                        {{ tx[0].strftime('%d.%m.%Y %H:%M') }}
+                <div class="card-item"
+                data-from-card="{{ tx[1] or '' }}"
+                data-from-cat="{{ tx[2] or '' }}"
+                data-to-card="{{ tx[3] or '' }}"
+                data-to-cat="{{ tx[4] or '' }}">
+                    <!-- Время отображается через JS (см. внизу) -->
+                    <div class="item-desc transaction-time" data-utc="{{ tx[0].isoformat() }}">
+                        {{ tx[0].strftime('%d.%m.%Y %H:%M') }} <!-- fallback -->
                     </div>
                     <div class="item-title">
                         {% if tx[1] and tx[2] %}
@@ -35,7 +97,86 @@
                 </div>
             {% endfor %}
         </div>
-    {% else %}
-        <p class="empty-state">Нет транзакций.</p>
+
+        <script>
+            // Устанавливаем смещение часового пояса при загрузке
+            document.getElementById('tz_offset').value = new Date().getTimezoneOffset();
+        
+            // Конвертируем все временные метки в локальное время для отображения
+            document.querySelectorAll('.transaction-time').forEach(el => {
+                const utc = new Date(el.dataset.utc);
+                el.textContent = utc.toLocaleString();
+            });
+        
+            function downloadCSV() {
+                const header = [
+                    'Дата и время',
+                    'Карта (от)',
+                    'Категория (от)',
+                    'Карта (куда)',
+                    'Категория (куда)',
+                    'Сумма (₽)',
+                    'Описание'
+                ];
+                const rows = [];
+        
+                document.querySelectorAll('.card-item').forEach(item => {
+                    // 1. Время в локальном формате (как на странице), но в стандарте YYYY-MM-DD HH:MM:SS
+                    const utcStr = item.querySelector('.transaction-time').dataset.utc;
+                    const localDate = new Date(utcStr);
+                    // Используем шведский локаль для получения ISO-подобного формата без AM/PM
+                    const localTimeStr = localDate.toLocaleString('sv-SE', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }); // Пример: "2025-12-19 15:30:45"
+        
+                    // 2. Извлекаем данные из скрытых data-атрибутов (надёжнее, чем парсить текст)
+                    const fromCard = item.dataset.fromCard || '';
+                    const fromCat = item.dataset.fromCat || '';
+                    const toCard = item.dataset.toCard || '';
+                    const toCat = item.dataset.toCat || '';
+        
+                    // 3. Сумма и описание
+                    const amountText = item.querySelector('strong')?.textContent?.replace(/\s*₽.*/, '') || '';
+                    const descText = (item.querySelector('strong')?.nextSibling?.textContent || '')
+                        .replace(/—\s*/, '').trim() || '';
+        
+                    rows.push([
+                        localTimeStr,
+                        fromCard,
+                        fromCat,
+                        toCard,
+                        toCat,
+                        amountText,
+                        descText
+                    ]);
+                });
+        
+                // Формируем CSV
+                const csvContent = [header, ...rows]
+                    .map(row => row.map(field => {
+                        if (field == null) field = '';
+                        // Экранируем кавычки и оборачиваем в двойные кавычки
+                        return `"${String(field).replace(/"/g, '""')}"`;
+                    }).join(','))
+                    .join('\n');
+        
+                // Скачиваем
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'transactions.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        </script>
     {% endif %}
 {% endblock %}

@@ -7,13 +7,25 @@ from api import (
     add_template,
     change_template_by_id,
     delete_template_by_id,
+    get_category_by_id,
     get_active_categories_by_owner_id,
     get_inactive_categories_by_owner_id
 )
-from utils import validate_percents
+from utils import (
+    validate_percents,
+    category_turple_to_dict
+)
 import json
 
 money_templates_bp = Blueprint('money_templates', __name__, url_prefix='/money_templates')
+
+def safe_category_by_id(category_id):
+    """Возвращает категорию, если она существует и принадлежит текущему пользователю."""
+    cat = get_category_by_id(category_id)
+    if not cat or cat[1] != current_user.id:  # cat[1] = owner_id
+        return None
+    return category_turple_to_dict(cat)
+
 
 def safe_template_by_id(template_id):
     """Возвращает шаблон, если он принадлежит текущему пользователю."""
@@ -32,18 +44,19 @@ def safe_template_by_id(template_id):
 def list_templates():
     raw = get_templates_by_owner_id(current_user.id) or []
     templates = []
+
     for t in raw:
         try:
-            percents = json.loads(t[2])
-            percents = {int(k): v for k, v in percents.items()}
+            percents = {int(k): v for k, v in t[2].items()}
         except:
             percents = {}
         templates.append({
             'template_id': t[0],
             'description': t[3],
-            'percents': percents
+            'percents': t[2]
         })
-    return render_template('money_templates/list.html', templates=templates)
+    
+    return render_template('money_templates/list.html', templates=templates, safe_category_by_id=safe_category_by_id)
 
 @money_templates_bp.route('/add', methods=['GET', 'POST'])
 @login_required
